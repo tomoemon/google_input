@@ -122,6 +122,8 @@ class GoogleInput:
                 else:
                     next_candidates.append(rule)
 
+        self.next_candidates = next_candidates
+
         if not next_candidates:
             """ 次以降の入力にマッチするルールの候補がない """
             if tmp_fixed:
@@ -148,5 +150,3 @@ class GoogleInput:
             self.input_buffer = input
             self.tmp_fixed = tmp_fixed
             return FilterResult(input, "", tmp_fixed, None, next_candidates)
-
-        self.next_candidates = next_candidates
