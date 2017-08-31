@@ -1,9 +1,10 @@
-from google_input import FilterRuleTable, GoogleInput
+from filter_rule import FilterRuleTable
+from google_input_ime import GoogleInputIME
 
 
 if __name__ == '__main__':
     table = FilterRuleTable.from_file("google_ime_default_roman_table.txt")
-    gi = GoogleInput(table)
+    gi = GoogleInputIME(table)
     input_string = "nankoattaltuke"
     output = ""
     for c in input_string:
