@@ -109,7 +109,7 @@ class GoogleInputIME:
         'n': { 'a': {'_out_': Rule("na", "な", "")},
                'n': {'_out_': Rule("nn", "ん", "")},
                # 'a', 'n' 以外の入力に関する遷移を生成する
-               # その際、その入力は「次の入力」として定義する
+               # その際、その入力は「次の入力」として扱われる
                'b': {'_out_': Rule("nb", "ん", "b")},
                'c': {'_out_': Rule("nc", "ん", "c")},
                ... # 以下 'n' を除いて同様
@@ -157,6 +157,7 @@ class GoogleInputIME:
         """
         c = self.current_node
         if key not in c:
+            # 次にマッチしうるどのルールの入力にも一致しない場合
             return self.Result(False, None, self.finished)
 
         output_rule = c[key].output_rule
