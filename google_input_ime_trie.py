@@ -34,17 +34,15 @@ class GoogleInputIME:
     本家に則って「ローマ字入力」と記載しているが、FilterRule 次第で様々な配列を実現できる
 
     Attributes:
-        rule_table (list(FilterRuleTable)): 変換ルールのリスト
-        input_buffer (str): 直前までに入力された文字列を保持する
-        tmp_fixed (FileterRule): 直前までの入力で仮確定しているルール
-        next_candidates (list(FilterRule)): 直前までの入力に対して、次にマッチする可能性があるルールの候補
+        root (TrieNode): 開始ノード
+        current (TrieNode): 変換中の現在のノードを表す
     """
     class Result:
         def __init__(self, moved, output_rule, finished):
             """
-            moved: 今回の入力で1回以上次の Node へ遷移した
+            moved: 今回の入力で1回以上次の Node へ遷移した（＝いずれかのルールの入力にマッチした）
             output_rule: 今回の入力で確定した output_rule
-            finished: 今回の入力で遷移する Rule が完了した（＝初期状態に戻った）
+            finished: 初期状態に戻った（もともと初期状態でいずれのルールにもマッチしなかったか、ルール遷移中に入力が完了したか）
             """
             self.moved = moved
             self.output_rule = output_rule
@@ -114,6 +112,14 @@ class GoogleInputIME:
                'c': {'_out_': Rule("nc", "ん", "c")},
                ... # 以下 'n' を除いて同様
                }}
+
+        ww/っ/w
+        www/w/ww
+        という定義があった場合は
+        wwa/っ/wa
+        wwb/っ/wb
+        ...
+        という遷移を生成する
         """
         c = cls.complement_node
         if node:
@@ -123,7 +129,9 @@ class GoogleInputIME:
                 non_exist_transitions = set(inputtable_keys) - set(node.keys())
                 for k in non_exist_transitions:
                     node[k] = TrieNode()
-                    node[k].output_rule = FilterRule(output_rule.input + k, output_rule.output, k)
+                    node[k].output_rule = FilterRule(output_rule.input + k,
+                        output_rule.output,
+                        output_rule.next_input + k)
             for k in node.keys():
                 c(node[k], inputtable_keys)
 
