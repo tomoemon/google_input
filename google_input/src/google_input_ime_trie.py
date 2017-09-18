@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import fileinput
-from filter_rule import FilterRule
+from .filter_rule import FilterRule
 
 
 class TrieNode(dict):
@@ -130,8 +130,8 @@ class GoogleInputIME:
                 for k in non_exist_transitions:
                     node[k] = TrieNode()
                     node[k].output_rule = FilterRule(output_rule.input + k,
-                        output_rule.output,
-                        output_rule.next_input + k)
+                                                     output_rule.output,
+                                                     output_rule.next_input + k)
             for k in node.keys():
                 c(node[k], inputtable_keys)
 

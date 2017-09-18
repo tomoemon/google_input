@@ -22,13 +22,16 @@ class State(dict):
         if input in self:
             raise Exception(f"cannot overwrite connections. input:{input}, connections:{self}")
         self[input] = next_state
-        next_state.parents.append((input, self)) # 何のキーとともに遷移してきたか
+        next_state.parents.append((input, self))  # 何のキーとともに遷移してきたか
 
     def input(self, input):
         # connections に存在しなければ例外を投げるのでそれで検知する
         return self[input]  # next_state
 
+
 search_called = 0
+
+
 def search(inputtable_keys, current, inputted_kana, rest_kana, states_dict):
     global search_called
     search_called += 1
@@ -45,7 +48,7 @@ def search(inputtable_keys, current, inputted_kana, rest_kana, states_dict):
         if inputted_kana in states_dict:
             next_state = states_dict[inputted_kana]
         else:
-            next_state = State(current.ime.copy(), finished=next_rest_kana=="")
+            next_state = State(current.ime.copy(), finished=next_rest_kana == "")
             states_dict[inputted_kana] = next_state
         current.connect(k, next_state)
         return
@@ -107,10 +110,13 @@ def set_finish_mark(leaf):
             parent[f"__{key}__"] = id(child)
         set_finish_mark(parent)
 
+
 def main():
+    from os import path
     from pprint import pprint
-    from filter_rule import FilterRuleTable, FilterRule
     import time
+    from .. import data
+    from filter_rule import FilterRuleTable, FilterRule
 
     table = FilterRuleTable()
     table.add(FilterRule("n", "ん", ""))
@@ -124,7 +130,8 @@ def main():
     start = time.time()
     #keys = "ltuakin"
     inputtable_keys = "".join([chr(i) for i in range(128) if chr(i).isprintable()])
-    table = FilterRuleTable.from_file("google_ime_default_roman_table.txt")
+    table = FilterRuleTable.from_file(path.join(path.dirname(path.dirname(path.abspath(__file__))),
+                                                "data", "google_ime_default_roman_table.txt"))
     table.add_half_character_rules()
     ime = GoogleInputIME(table, inputtable_keys)
 
@@ -162,7 +169,7 @@ def main():
     states_dict = {"": root}
     next_state_keys = set([""])
     while next_state_keys:
-        #pprint(states_dict)
+        # pprint(states_dict)
         print(f"search_called: {search_called}")
         print(f"next_state_keys: {next_state_keys}")
         last_state_keys = set(states_dict.keys())
@@ -179,19 +186,20 @@ def main():
     def print_finished_node(current, depth):
         for key in current.to_finishes:
             print("  " * depth, key, id(current[key]))
-            print_finished_node(current[key], depth+1)
+            print_finished_node(current[key], depth + 1)
 
     #print_finished_node(root, 0)
 
-    #print("# finish state")
-    #pprint(states_dict[target_string])
-    #print("# parent state")
-    #pprint(states_dict[target_string].parents)
-    #print("# backtrack")
-    #print(backtrack(states_dict[target_string]))
+    # print("# finish state")
+    # pprint(states_dict[target_string])
+    # print("# parent state")
+    # pprint(states_dict[target_string].parents)
+    # print("# backtrack")
+    # print(backtrack(states_dict[target_string]))
 
-    #print("\n# States")
-    #pprint(states_dict)
+    # print("\n# States")
+    # pprint(states_dict)
+
 
 if __name__ == '__main__':
     main()
