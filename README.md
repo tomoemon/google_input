@@ -1,9 +1,10 @@
 # google_input
 
+[![Build Status](https://travis-ci.org/tomoemon/google_input.svg?branch=develop)](https://travis-ci.org/tomoemon/google_input)
+
 これは、Google 日本語入力のローマ字入力のアルゴリズムを実装してみたものです。
 
 ※Google 日本語入力のオープンソース版である mozc(https://github.com/google/mozc) のソースコードを直接参考にしたわけではなく、通常使用する際に観測できた挙動に従って実装してみたものであるため、実際の仕様とは異なる可能性があります。
-
 ## 実装動機
 
 これまで何度かローマ字入力のアルゴリズムを実装する機会がありましたがとてもスマートとはいえない実装しかできませんでした。また、他のタイピングソフト作者らのローマ字入力アルゴリズムの実装をいくつか読む機会がありましたが、やはりいずれもローマ字入力特有の例外処理に苦労している様子が見られました。
