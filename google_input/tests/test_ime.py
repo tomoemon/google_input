@@ -2,6 +2,7 @@
 from pprint import pprint
 from google_input.ime import GoogleInputIME, TrieNode
 from google_input.filter_rule import FilterRuleTable, FilterRule
+from google_input import data
 
 
 def test_empty_rule():
@@ -15,7 +16,8 @@ def test_empty_rule():
 
     result = result_list[0]
     assert result.moved == False, "ルールにマッチしないので遷移しない"
-    assert result.output_rule is None, "ルールにマッチしないので出力はなし"
+    rule = result.output_rule
+    assert (rule.input, rule.output, rule.next_input) == ('x', 'x', '')
     assert result.finished == True, "どのルールにもマッチせず初期状態に戻る"
 
 
@@ -142,7 +144,8 @@ def test_match_shortest_in_common_prefix_rules():
 
     result_2 = result_list[1]
     assert result_2.moved == False, "初期状態に戻っているのでどのルールにもマッチしない"
-    assert result_2.output_rule is None
+    rule = result_2.output_rule
+    assert (rule.input, rule.output, rule.next_input) == ('b', 'b', '')
     assert result_2.finished == True
 
 
@@ -176,18 +179,20 @@ def test_match_shortest_having_next_input_in_common_prefix_rules():
     assert (rule.input, rule.output, rule.next_input) == ('a', 'A', 'pb')
     assert result_1.finished == True
 
-    result_3 = result_list[1]
-    assert result_3.moved == False, "初期状態に戻っているのでどのルールにもマッチしない"
-    assert result_3.output_rule is None
-    assert result_3.finished == True
-
     result_2 = result_list[1]
     assert result_2.moved == False, "初期状態に戻っているのでどのルールにもマッチしない"
-    assert result_2.output_rule is None
+    rule = result_2.output_rule
+    assert (rule.input, rule.output, rule.next_input) == ('p', 'p', '')
     assert result_2.finished == True
 
+    result_3 = result_list[2]
+    assert result_3.moved == False, "初期状態に戻っているのでどのルールにもマッチしない"
+    rule = result_3.output_rule
+    assert (rule.input, rule.output, rule.next_input) == ('b', 'b', '')
+    assert result_3.finished == True
 
-def test_possible_keys():
+
+def test_possible_input():
     table = FilterRuleTable()
     table.add(FilterRule("a", "A", ""))
     table.add(FilterRule("ax", "AX", ""))
@@ -195,65 +200,146 @@ def test_possible_keys():
 
     # 初期状態
     ime = GoogleInputIME(table)
-    assert sorted(list(ime.possible_keys)) == ["a", "b"]
+    assert sorted(list(ime.possible_input)) == ["a", "b"]
 
     # 共通プレフィックスを持つルールのうち、最短のルールの遷移が完了した状態
     ime = GoogleInputIME(table)
     ime.input("a")
-    assert sorted(list(ime.possible_keys)) == ["a", "b", "x"]
+    assert sorted(list(ime.possible_input)) == ["a", "b", "x"]
     ime.input("a")
-    assert sorted(list(ime.possible_keys)) == ["a", "b", "x"]
+    assert sorted(list(ime.possible_input)) == ["a", "b", "x"]
 
     # ルールの遷移が完了
     ime = GoogleInputIME(table)
     ime.input("a")
     ime.input("x")
-    assert sorted(list(ime.possible_keys)) == ["a", "b"]
+    assert sorted(list(ime.possible_input)) == ["a", "b"]
 
     # ルールの遷移が完了した
     ime = GoogleInputIME(table)
     ime.input("b")
-    assert sorted(list(ime.possible_keys)) == ["a", "b"]
+    assert sorted(list(ime.possible_input)) == ["a", "b"]
 
     # ルールとは関係ないキーを入力
     ime = GoogleInputIME(table)
     ime.input("p")
-    assert sorted(list(ime.possible_keys)) == ["a", "b"]
+    assert sorted(list(ime.possible_input)) == ["a", "b"]
 
 
-def main():
+def test_romaji_input():
+    table = FilterRuleTable.from_file(data.filepath("google_ime_default_roman_table.txt"))
+
+    # 撥音
+    ime = GoogleInputIME(table)
+    inputs = "nandexnnenn"
+    output = []
+    for c in inputs:
+        results = ime.input(c)
+        output.append("".join(r.output_rule.output for r in results if r.output_rule))
+    assert "".join(output) == "なんでんねん"
+
+    # 促音
+    ime = GoogleInputIME(table)
+    inputs = "attisoltuchi"
+    output = []
+    for c in inputs:
+        results = ime.input(c)
+        output.append("".join(r.output_rule.output for r in results if r.output_rule))
+    assert "".join(output) == "あっちそっち"
+
+    # 清音
+    ime = GoogleInputIME(table)
+    inputs = "aiueokakikukekosasisusesotatitutetonaninunenohahihuhehomamimumemoyayuyorarirurerowawonn"
+    output = []
+    for c in inputs:
+        results = ime.input(c)
+        output.append("".join(r.output_rule.output for r in results if r.output_rule))
+    assert "".join(output) == "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん"
+
+    # 濁音、半濁音
+    ime = GoogleInputIME(table)
+    inputs = "gagigugegozazizuzezodadidudedobabibubebopapipupepo"
+    output = []
+    for c in inputs:
+        results = ime.input(c)
+        output.append("".join(r.output_rule.output for r in results if r.output_rule))
+    assert "".join(output) == "がぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽ"
+
+    # 拗音
+    ime = GoogleInputIME(table)
+    inputs = "lalilulelokyakyukyoshashushotyatyutyonyanyunyohyahyuhyomyamyumyoryaryuryo"
+    output = []
+    for c in inputs:
+        results = ime.input(c)
+        output.append("".join(r.output_rule.output for r in results if r.output_rule))
+    assert "".join(output) == "ぁぃぅぇぉきゃきゅきょしゃしゅしょちゃちゅちょにゃにゅにょひゃひゅひょみゃみゅみょりゃりゅりょ"
+
+    #
+    ime = GoogleInputIME(table)
+    inputs = "nk"
+    output = []
+    for c in inputs:
+        results = ime.input(c)
+        output.append("".join(r.output_rule.output for r in results if r.output_rule))
+
+
+def test_azik_input():
+    table = FilterRuleTable.from_file(data.filepath("google_ime_tomoemon_azik.txt"))
+
+    #
+    ime = GoogleInputIME(table)
+    inputs = "a@ko"
+    output = []
+    for c in inputs:
+        results = ime.input(c)
+        output.append("".join(r.output_rule.output for r in results if r.output_rule))
+    assert "".join(output) == "あんこ"
+    #
+    ime = GoogleInputIME(table)
+    inputs = "eqno"
+    output = []
+    for c in inputs:
+        results = ime.input(c)
+        output.append("".join(r.output_rule.output for r in results if r.output_rule))
+    assert "".join(output) == "えんの"
+    #
+    ime = GoogleInputIME(table)
+    inputs = "sa@"
+    output = []
+    for c in inputs:
+        results = ime.input(c)
+        output.append("".join(r.output_rule.output for r in results if r.output_rule))
+    assert "".join(output) == "さ"
+    assert results[-1].buffer == "ん"
+
+    #
+    ime = GoogleInputIME(table)
+    inputs = "aksw"
+    output = []
+    for c in inputs:
+        results = ime.input(c)
+        output.append("".join(r.output_rule.output for r in results if r.output_rule))
+    assert "".join(output) == "あkせい"
+
+
+def test_long_not_matched():
     table = FilterRuleTable()
-    table.add(FilterRule("n", "ん", ""))
-    table.add(FilterRule("nn", "ん", ""))
-    table.add(FilterRule("na", "な", ""))
-    table.add(FilterRule("ni", "に", ""))
-    table.add(FilterRule("ka", "か", ""))
-    table.add(FilterRule("kk", "っ", "y"))
-    table.add(FilterRule("ltu", "っ", ""))
-    # table.add(FilterRule("a", "", "☆"))
-    # table.add(FilterRule("b", "", "☆"))
-    # table.add(FilterRule("☆c", "", "□"))
-    # table.add(FilterRule("☆d", "", "□"))
-    # table.add(FilterRule("◯a", "", "□"))
-    # table.add(FilterRule("□e", "か", ""))
+    table.add(FilterRule("abcde", "ABC", ""))
 
-    ime = GoogleInputIME()
-    ime.set_table(table)
-    ime.complement("ltuabcdkin")
-
-    #pprint(ime.root, width=1)
-    for k in "nanka":
-        # pprint(list(ime.possible_keys))
-        print(k, ime.input(k))
-
-    # table = FilterRuleTable.from_file("google_ime_default_roman_table.txt")
-    root = TrieNode()
-    for rule in table:
-        TrieNode.make(root, rule, rule.input)
-
-    # make_printable(root)
-    #pprint(root, width=1)
-
-    #complement_node(root, "abcin")
-    # make_printable(root)
-    #pprint(root, width=1)
+    # 初期状態
+    ime = GoogleInputIME(table)
+    results = ime.input("a")
+    assert len(results) == 1
+    assert results[0].output_rule is None
+    results = ime.input("b")
+    assert len(results) == 1
+    assert results[0].output_rule is None
+    results = ime.input("c")
+    assert len(results) == 1
+    assert results[0].output_rule is None
+    results = ime.input("X")
+    assert len(results) == 2
+    rule = results[0].output_rule
+    assert (rule.input, rule.output, rule.next_input) == ('abc', 'abc', 'X')
+    rule = results[1].output_rule
+    assert (rule.input, rule.output, rule.next_input) == ('X', 'X', '')

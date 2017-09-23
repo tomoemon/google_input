@@ -28,12 +28,15 @@ def make_printable(node):
             make_printable(v)
 
 
-class InputResult(namedtuple('InputResult', "moved output_rule finished")):
+class InputResult(namedtuple('InputResult', "moved output_rule buffer")):
     """
     moved: 今回の入力で1回以上次の Node へ遷移した（＝いずれかのルールの入力にマッチした）
     output_rule: 今回の入力で確定した output_rule
-    finished: 初期状態に戻った（もともと初期状態でいずれのルールにもマッチしなかったか、ルール遷移中に入力が完了したか）
+    buffer: 初期状態に戻った（もともと初期状態でいずれのルールにもマッチしなかったか、ルール遷移中に入力が完了したか）
     """
+    @property
+    def finished(self):
+        return self.buffer == ""
 
 
 class GoogleInputIME:
@@ -46,10 +49,14 @@ class GoogleInputIME:
         current_node (TrieNode): 変換中の現在のノードを表す
     """
 
-    __slots__ = ["root", "current_node"]
+    __slots__ = ["root", "current_node", "last_buffer"]
 
     def __init__(self, rule_table=()):
         self.set_table(rule_table)
+
+    def reset(self):
+        self.last_buffer = ""
+        self.current_node = self.root
 
     @property
     def finished(self):
@@ -59,6 +66,7 @@ class GoogleInputIME:
         new_ime = GoogleInputIME()
         new_ime.root = self.root
         new_ime.current_node = self.current_node
+        new_ime.last_buffer = self.last_buffer
         return new_ime
 
     def set_table(self, rule_table):
@@ -66,19 +74,16 @@ class GoogleInputIME:
         for r in rule_table:
             TrieNode.make(root, r, r.input)
         self.root = root
-        self.current_node = self.root
+        self.reset()
 
     @property
-    def possible_keys(self):
-        if self.current_node.output_rule:
-            # current_node に output_rule がある場合は下記2パターンの遷移がありうる
-            # 1. ルール上の次の遷移に進むか（ルール上の次の遷移が候補）
-            # 2. ルールから外れて現在の output_rule を確定させる（root からの遷移が候補）
-            result = set(self.current_node.keys())
-            result.update(self.root.keys())
-            return result
-        else:
-            return self.current_node.keys()
+    def possible_input(self):
+        # 下記2パターンの遷移がありうる
+        # 1. ルール上の次の遷移に進むか（ルール上の次の遷移が候補）
+        # 2. ルールから外れて現在の output_rule を確定させる（root からの遷移が候補）
+        result = set(self.current_node.keys())
+        result.update(self.root.keys())
+        return result
 
     def input(self, keys, last_results=[]):
         """ next_input の自動遷移を考慮して変換結果を返す
@@ -97,7 +102,7 @@ class GoogleInputIME:
         if len(last_results) > 10:
             return last_results
         result = self._input(key)
-        rest_keys = result.output_rule.next_input if result.output_rule else rest_keys
+        rest_keys = (result.output_rule.next_input if result.output_rule else "") + rest_keys
         return self.input(rest_keys, last_results + [result])
 
     def _input(self, key):
@@ -111,21 +116,28 @@ class GoogleInputIME:
         c = self.current_node
         if key not in c:
             # 次にマッチしうるどのルールの入力にも一致しない場合
+            last_buffer = self.last_buffer
+            self.current_node = self.root
+            self.last_buffer = ""
             if c.output_rule:
                 # 現在のノードが出力を持っている場合はそれを結果として返し、
                 # 入力された値を次の入力にセットして返す
-                self.current_node = self.root
                 next_input = c.output_rule.next_input + key
-                return InputResult(True, c.output_rule._replace(next_input=next_input), True)
+                return InputResult(True, c.output_rule._replace(next_input=next_input), "")
             else:
-                return InputResult(False, None, self.finished)
+                if last_buffer:
+                    # これまでに入力途中だった文字列があればそれを確定して出力する
+                    return InputResult(False, FilterRule(last_buffer, last_buffer, key), "")
+                else:
+                    return InputResult(False, FilterRule(key, key, ""), "")
 
-        output_rule = c[key].output_rule
         if c[key]:
             # この次にさらに現在のルール上で遷移が続く場合
             self.current_node = c[key]
-            return InputResult(True, None, False)
+            self.last_buffer += key
+            return InputResult(True, None, self.last_buffer)
         else:
             # finish
             self.current_node = self.root
-            return InputResult(True, output_rule, True)
+            self.last_buffer = ""
+            return InputResult(True, c[key].output_rule, "")
