@@ -114,7 +114,7 @@ def main():
     from pprint import pprint
     import time
     from .filter_rule import FilterRuleTable, FilterRule
-    import data
+    from google_input import data
 
     table = FilterRuleTable()
     table.add(FilterRule("n", "ん", ""))
@@ -131,7 +131,7 @@ def main():
     table = FilterRuleTable.from_file(data.filepath("google_ime_default_roman_table.txt"))
     table.add_half_character_rules()
     ime = GoogleInputIME(table)
-    ime.complement(inputtable_keys)
+    # ime.complement(inputtable_keys)
 
     print(f"ime constructed: {time.time() - start}")
     start = time.time()
@@ -186,7 +186,7 @@ def main():
             print("  " * depth, key, id(current[key]))
             print_finished_node(current[key], depth + 1)
 
-    # print_finished_node(root, 0)
+    print_finished_node(root, 0)
 
     # print("# finish state")
     # pprint(states_dict[target_string])

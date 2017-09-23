@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import fileinput
 from collections import namedtuple
 from .filter_rule import FilterRule
 
@@ -44,8 +43,10 @@ class GoogleInputIME:
 
     Attributes:
         root (TrieNode): 開始ノード
-        current (TrieNode): 変換中の現在のノードを表す
+        current_node (TrieNode): 変換中の現在のノードを表す
     """
+
+    __slots__ = ["root", "current_node"]
 
     def __init__(self, rule_table=()):
         self.set_table(rule_table)
@@ -69,61 +70,15 @@ class GoogleInputIME:
 
     @property
     def possible_keys(self):
-        return self.current_node.keys()
-
-    def complement(self, inputtable_keys):
-        self.complement_node(self.root, inputtable_keys)
-
-    @classmethod
-    def complement_node(cls, node, inputtable_keys):
-        """ TrieNode のうち、output が定義されていてもさらにその次に遷移する可能性が残っている
-        Node は遷移が不明確なので、具体的なキーで補完する
-
-        下記のような定義があった場合、
-          FilterRule("n", "ん", ""))
-          FilterRule("nn", "ん", ""))
-          FilterRule("na", "な", ""))
-
-        次のような TrieNode が形成される
-        'n': {'_out_': Rule("n", "ん", ""),
-               'a': {'_out_': Rule("na", "な", "")},
-               'n': {'_out_': Rule("nn", "ん", "")}}}
-
-        このとき、"n" だけ打っても「ん」が確定出力されるわけではなく、
-        "a" や "n" 以外のキーを打った際に初めて「ん」が確定する。
-        そのため、入力される可能性のあるキー（例えば半角英字の小文字 a-z）に対する遷移を生成する
-
-        上記の例の場合は下記 TrieNode を再構築する
-        'n': { 'a': {'_out_': Rule("na", "な", "")},
-               'n': {'_out_': Rule("nn", "ん", "")},
-               # 'a', 'n' 以外の入力に関する遷移を生成する
-               # その際、その入力は「次の入力」として扱われる
-               'b': {'_out_': Rule("nb", "ん", "b")},
-               'c': {'_out_': Rule("nc", "ん", "c")},
-               ... # 以下 'n' を除いて同様
-               }}
-
-        ww/っ/w
-        www/w/ww
-        という定義があった場合は
-        wwa/っ/wa
-        wwb/っ/wb
-        ...
-        という遷移を生成する
-        """
-        c = cls.complement_node
-        if node:
-            if node.output_rule:
-                output_rule = node.output_rule
-                node.output_rule = None
-                non_exist_transitions = set(inputtable_keys) - set(node.keys())
-                for k in non_exist_transitions:
-                    node[k] = TrieNode()
-                    node[k].output_rule = FilterRule(output_rule.input + k,
-                                                     output_rule.output,
-                                                     output_rule.next_input + k)
-            for k in node.keys():
-                c(node[k], inputtable_keys)
+        if self.current_node.output_rule:
+            # current_node に output_rule がある場合は下記2パターンの遷移がありうる
+            # 1. ルール上の次の遷移に進むか（ルール上の次の遷移が候補）
+            # 2. ルールから外れて現在の output_rule を確定させる（root からの遷移が候補）
+            result = set(self.current_node.keys())
+            result.update(self.root.keys())
+            return result
+        else:
+            return self.current_node.keys()
 
     def input(self, keys, last_results=[]):
         """ next_input の自動遷移を考慮して変換結果を返す
@@ -156,57 +111,20 @@ class GoogleInputIME:
         c = self.current_node
         if key not in c:
             # 次にマッチしうるどのルールの入力にも一致しない場合
-            return InputResult(False, None, self.finished)
+            if c.output_rule:
+                # 現在のノードが出力を持っている場合はそれを結果として返し、
+                # 入力された値を次の入力にセットして返す
+                self.current_node = self.root
+                return InputResult(True, c.output_rule._replace(next_input=key), True)
+            else:
+                return InputResult(False, None, self.finished)
 
         output_rule = c[key].output_rule
-        #print(f"output_rule: {output_rule}, next_keys: {[a for a in c[key].keys()]}")
-        if output_rule:
-            if c[key]:
-                # 出力はあるが、次に継続する遷移が存在する
-                self.current_node = c[key]
-                return InputResult(True, output_rule, False)
-            else:
-                # finish
-                self.current_node = self.root
-                return InputResult(True, output_rule, True)
-        else:
+        if c[key]:
+            # この次にさらに現在のルール上で遷移が続く場合
             self.current_node = c[key]
             return InputResult(True, None, False)
-
-
-if __name__ == '__main__':
-    from pprint import pprint
-    from filter_rule import FilterRuleTable, FilterRule
-    table = FilterRuleTable()
-    table.add(FilterRule("n", "ん", ""))
-    table.add(FilterRule("nn", "ん", ""))
-    table.add(FilterRule("na", "な", ""))
-    table.add(FilterRule("ni", "に", ""))
-    table.add(FilterRule("ka", "か", ""))
-    table.add(FilterRule("kk", "っ", "y"))
-    table.add(FilterRule("ltu", "っ", ""))
-    # table.add(FilterRule("a", "", "☆"))
-    # table.add(FilterRule("b", "", "☆"))
-    # table.add(FilterRule("☆c", "", "□"))
-    # table.add(FilterRule("☆d", "", "□"))
-    # table.add(FilterRule("◯a", "", "□"))
-    # table.add(FilterRule("□e", "か", ""))
-
-    ime = GoogleInputIME(table, "ltuabcdkin")
-
-    pprint(ime.root, width=1)
-    for k in "nanka":
-        pprint(list(ime.possible_keys))
-        print(k, ime.input(k))
-
-    # table = FilterRuleTable.from_file("google_ime_default_roman_table.txt")
-    root = TrieNode()
-    for rule in table:
-        TrieNode.make(root, rule, rule.input)
-
-    # make_printable(root)
-    #pprint(root, width=1)
-
-    #complement_node(root, "abcin")
-    # make_printable(root)
-    #pprint(root, width=1)
+        else:
+            # finish
+            self.current_node = self.root
+            return InputResult(True, output_rule, True)

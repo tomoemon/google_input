@@ -79,7 +79,7 @@ def test_long_input():
     assert (rule.input, rule.output, rule.next_input) == ('abc', 'ABCDE', '')
 
 
-def test_common_prefix_rule():
+def test_match_longest_in_common_prefix_rules():
     table = FilterRuleTable()
     table.add(FilterRule("a", "A", ""))
     table.add(FilterRule("ax", "AX", ""))
@@ -94,10 +94,8 @@ def test_common_prefix_rule():
 
     result = result_list[0]
     assert result.moved == True, "ルールにマッチするので遷移する"
-    assert result.output_rule is not None, "ルールにマッチしてすべての入力を完了したので出力あり"
-    rule = result.output_rule
-    assert (rule.input, rule.output, rule.next_input) == ('a', 'A', '')
-    assert result.finished == False, "すべての入力を完了したので初期状態に戻る"
+    assert result.output_rule is None, "ルールにマッチしたが出力は確定していない"
+    assert result.finished == False, "まだ遷移は完了していない"
 
     # 続けて、IME に対して 'x' を入力
     result_list = ime.input("x")
@@ -110,6 +108,76 @@ def test_common_prefix_rule():
     rule = result.output_rule
     assert (rule.input, rule.output, rule.next_input) == ('ax', 'AX', '')
     assert result.finished == True
+
+
+def test_match_shortest_in_common_prefix_rules():
+    table = FilterRuleTable()
+    table.add(FilterRule("a", "A", ""))
+    table.add(FilterRule("ax", "AX", ""))
+
+    # ルール1件で IME を生成
+    ime = GoogleInputIME(table)
+
+    # IME に対して 'a' を入力
+    result_list = ime.input("a")
+
+    assert len(result_list) == 1, "「次の入力」への継続がないので結果は1つのみ"
+
+    result = result_list[0]
+    assert result.moved == True, "ルールにマッチするので遷移する"
+    assert result.output_rule is None, "ルールにマッチしたが出力は確定していない"
+    assert result.finished == False, "まだ遷移は完了していない"
+
+    # 続けて、IME に対して 'b' を入力
+    result_list = ime.input("b")
+
+    assert len(result_list) == 2, "「次の入力」への継続があるので結果は2つ"
+
+    result_1 = result_list[0]
+    assert result_1.moved == True, "初期状態に戻っているのでどのルールにもマッチしない"
+    assert result_1.output_rule is not None
+    rule = result_1.output_rule
+    assert (rule.input, rule.output, rule.next_input) == ('a', 'A', 'b')
+    assert result_1.finished == True
+
+    result_2 = result_list[1]
+    assert result_2.moved == False, "初期状態に戻っているのでどのルールにもマッチしない"
+    assert result_2.output_rule is None
+    assert result_2.finished == True
+
+
+def test_possible_keys():
+    table = FilterRuleTable()
+    table.add(FilterRule("a", "A", ""))
+    table.add(FilterRule("ax", "AX", ""))
+    table.add(FilterRule("b", "B", ""))
+
+    # 初期状態
+    ime = GoogleInputIME(table)
+    assert sorted(list(ime.possible_keys)) == ["a", "b"]
+
+    # 共通プレフィックスを持つルールのうち、最短のルールの遷移が完了した状態
+    ime = GoogleInputIME(table)
+    ime.input("a")
+    assert sorted(list(ime.possible_keys)) == ["a", "b", "x"]
+    ime.input("a")
+    assert sorted(list(ime.possible_keys)) == ["a", "b", "x"]
+
+    # ルールの遷移が完了
+    ime = GoogleInputIME(table)
+    ime.input("a")
+    ime.input("x")
+    assert sorted(list(ime.possible_keys)) == ["a", "b"]
+
+    # ルールの遷移が完了した
+    ime = GoogleInputIME(table)
+    ime.input("b")
+    assert sorted(list(ime.possible_keys)) == ["a", "b"]
+
+    # ルールとは関係ないキーを入力
+    ime = GoogleInputIME(table)
+    ime.input("p")
+    assert sorted(list(ime.possible_keys)) == ["a", "b"]
 
 
 def main():
