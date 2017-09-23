@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import fileinput
+from collections import namedtuple
 from .filter_rule import FilterRule
 
 
@@ -28,6 +29,14 @@ def make_printable(node):
             make_printable(v)
 
 
+class InputResult(namedtuple('InputResult', "moved output_rule finished")):
+    """
+    moved: 今回の入力で1回以上次の Node へ遷移した（＝いずれかのルールの入力にマッチした）
+    output_rule: 今回の入力で確定した output_rule
+    finished: 初期状態に戻った（もともと初期状態でいずれのルールにもマッチしなかったか、ルール遷移中に入力が完了したか）
+    """
+
+
 class GoogleInputIME:
     """ Google 日本語入力のローマ字入力と同様のアルゴリズムでシーケンシャルにローマ字からかなに変換する
 
@@ -37,29 +46,9 @@ class GoogleInputIME:
         root (TrieNode): 開始ノード
         current (TrieNode): 変換中の現在のノードを表す
     """
-    class Result:
-        def __init__(self, moved, output_rule, finished):
-            """
-            moved: 今回の入力で1回以上次の Node へ遷移した（＝いずれかのルールの入力にマッチした）
-            output_rule: 今回の入力で確定した output_rule
-            finished: 初期状態に戻った（もともと初期状態でいずれのルールにもマッチしなかったか、ルール遷移中に入力が完了したか）
-            """
-            self.moved = moved
-            self.output_rule = output_rule
-            self.finished = finished
 
-        def __repr__(self):
-            return f"Result(moved: {self.moved}, output_rule: {self.output_rule}, finished: {self.finished})"
-
-    def __init__(self, rule_table=None, inputtable_keys=None):
-        self.root = None
-        if rule_table and inputtable_keys:
-            self.set_table(rule_table)
-            self.complement(inputtable_keys)
-        self.reset()
-
-    def reset(self):
-        self.current_node = self.root
+    def __init__(self, rule_table=()):
+        self.set_table(rule_table)
 
     @property
     def finished(self):
@@ -76,6 +65,7 @@ class GoogleInputIME:
         for r in rule_table:
             TrieNode.make(root, r, r.input)
         self.root = root
+        self.current_node = self.root
 
     @property
     def possible_keys(self):
@@ -138,18 +128,18 @@ class GoogleInputIME:
     def input(self, keys, last_results=[]):
         """ next_input の自動遷移を考慮して変換結果を返す
 
-        next_input による無限ループを防ぐため、自動遷移は5回までとする
+        next_input による無限ループを防ぐため、自動遷移は 10 回までとする
 
         Args:
             key (str): 入力文字列
         Returns:
-            list(Result): 入力文字に対応する変換結果を返す。
-                          next_input により別のルールが適用された場合は複数の Result を返す
+            list(InputResult): 入力文字に対応する変換結果を返す。
+                          next_input により別のルールが適用された場合は複数の InputResult を返す
         """
         key, rest_keys = keys[:1], keys[1:]
         if not key:
             return last_results
-        if len(last_results) > 5:
+        if len(last_results) > 10:
             return last_results
         result = self._input(key)
         rest_keys = result.output_rule.next_input if result.output_rule else rest_keys
@@ -161,21 +151,27 @@ class GoogleInputIME:
         Args:
             key (str): 入力文字
         Returns:
-            Result: 入力文字に対応する変換結果を途中の状態も含めて返す
+            InputResult: 入力文字に対応する変換結果を途中の状態も含めて返す
         """
         c = self.current_node
         if key not in c:
             # 次にマッチしうるどのルールの入力にも一致しない場合
-            return self.Result(False, None, self.finished)
+            return InputResult(False, None, self.finished)
 
         output_rule = c[key].output_rule
+        #print(f"output_rule: {output_rule}, next_keys: {[a for a in c[key].keys()]}")
         if output_rule:
-            # finish
-            self.current_node = self.root
-            return self.Result(True, output_rule, True)
+            if c[key]:
+                # 出力はあるが、次に継続する遷移が存在する
+                self.current_node = c[key]
+                return InputResult(True, output_rule, False)
+            else:
+                # finish
+                self.current_node = self.root
+                return InputResult(True, output_rule, True)
         else:
             self.current_node = c[key]
-            return self.Result(True, output_rule, False)
+            return InputResult(True, None, False)
 
 
 if __name__ == '__main__':

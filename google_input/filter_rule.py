@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import fileinput
+from collections import namedtuple
 
 
-class FilterRule:
+class FilterRule(namedtuple('FilterRule', "input output next_input")):
     """ Google 日本語入力のローマ字カスタマイズテーブルの1行に対応
 
     仕様は Google 日本語入力のローマ字テーブル設定と同様で、
@@ -50,22 +51,14 @@ class FilterRule:
         next_input (str): input に対応する「次の入力」
     """
 
-    def __init__(self, input, output, next_input):
-        self.input = input
-        self.output = output
-        self.next_input = next_input
-
-    def __repr__(self):
-        return f'Rule("{self.input}", "{self.output}", "{self.next_input}")'
-
 
 class FilterRuleTable:
     """ Google 日本語入力のローマ字テーブル設定を表す
 
     1行1行を FilterRule として読み込み保持する """
 
-    def __init__(self, rules=[]):
-        self.rules = rules
+    def __init__(self, rules=None):
+        self.rules = rules if rules else []
 
     def __iter__(self):
         yield from self.rules

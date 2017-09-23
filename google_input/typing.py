@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-import fileinput
-from filter_rule import FilterRuleTable, FilterRule
-from google_input_ime_trie import GoogleInputIME
+from .ime import GoogleInputIME
 
 
 class State(dict):
@@ -35,14 +33,14 @@ search_called = 0
 def search(inputtable_keys, current, inputted_kana, rest_kana, states_dict):
     global search_called
     search_called += 1
-    #print(f"search: {backtrack(current)}, {inputted_kana}, {rest_kana}, {states_dict}")
+    # print(f"search: {backtrack(current)}, {inputted_kana}, {rest_kana}, {states_dict}")
     if not rest_kana:
         return
 
     # 入力対象がキー入力可能な文字そのものを表している場合（IME変換が不要な場合）
     if current.ime.finished and rest_kana[0] in inputtable_keys:
         k = rest_kana[0]
-        #print(f"[without ime] inputted: {inputted_keys}, key: {k}")
+        # print(f"[without ime] inputted: {inputted_keys}, key: {k}")
         next_rest_kana = rest_kana[1:]
         inputted_kana = inputted_kana + k
         if inputted_kana in states_dict:
@@ -62,11 +60,11 @@ def search(inputtable_keys, current, inputted_kana, rest_kana, states_dict):
         # その場合は失敗として扱う
         if results[-1].moved:
             output = "".join(r.output_rule.output for r in results if r.output_rule)
-            #print(f"[ime] inputted: {inputted_keys}, key: {k}, output: {output}")
+            # print(f"[ime] inputted: {inputted_keys}, key: {k}, output: {output}")
             if output:
                 if rest_kana.startswith(output):
                     next_rest_kana = rest_kana[len(output):]
-                    #print("output:", k, output)
+                    # print("output:", k, output)
                     next_inputted_kana = inputted_kana + output
                     if results[-1].finished:
                         if next_inputted_kana in states_dict:
@@ -81,7 +79,7 @@ def search(inputtable_keys, current, inputted_kana, rest_kana, states_dict):
                         current.connect(k, next_state)
                         search(inputtable_keys, next_state, next_inputted_kana, next_rest_kana, states_dict)
             else:
-                #print("moved:", k)
+                # print("moved:", k)
                 next_state = State(new_ime)
                 current.connect(k, next_state)
                 search(inputtable_keys, next_state, inputted_kana, rest_kana, states_dict)
@@ -115,8 +113,8 @@ def main():
     from os import path
     from pprint import pprint
     import time
-    from .. import data
-    from filter_rule import FilterRuleTable, FilterRule
+    from .filter_rule import FilterRuleTable, FilterRule
+    import data
 
     table = FilterRuleTable()
     table.add(FilterRule("n", "ん", ""))
@@ -128,12 +126,12 @@ def main():
     table.add(FilterRule("ltu", "っ", ""))
 
     start = time.time()
-    #keys = "ltuakin"
+    # keys = "ltuakin"
     inputtable_keys = "".join([chr(i) for i in range(128) if chr(i).isprintable()])
-    table = FilterRuleTable.from_file(path.join(path.dirname(path.dirname(path.abspath(__file__))),
-                                                "data", "google_ime_default_roman_table.txt"))
+    table = FilterRuleTable.from_file(data.filepath("google_ime_default_roman_table.txt"))
     table.add_half_character_rules()
-    ime = GoogleInputIME(table, inputtable_keys)
+    ime = GoogleInputIME(table)
+    ime.complement(inputtable_keys)
 
     print(f"ime constructed: {time.time() - start}")
     start = time.time()
@@ -161,11 +159,11 @@ def main():
 
     root = State(ime.copy())
 
-    #target_string = "ん!"
+    # target_string = "ん!"
     target_string = "380えんのほっかいどうめいさん"  # 4.3 sec かかる
-    #target_string = "めっさん"
+    # target_string = "めっさん"
     last_state_keys = set()
-    #target_string = "かった"
+    # target_string = "かった"
     states_dict = {"": root}
     next_state_keys = set([""])
     while next_state_keys:
@@ -181,14 +179,14 @@ def main():
     print(f"searched: {time.time() - start}")
     print("# Searched Tree")
     set_finish_mark(states_dict[target_string])
-    #pprint(root, width=1)
+    # pprint(root, width=1)
 
     def print_finished_node(current, depth):
         for key in current.to_finishes:
             print("  " * depth, key, id(current[key]))
             print_finished_node(current[key], depth + 1)
 
-    #print_finished_node(root, 0)
+    # print_finished_node(root, 0)
 
     # print("# finish state")
     # pprint(states_dict[target_string])
@@ -201,5 +199,4 @@ def main():
     # pprint(states_dict)
 
 
-if __name__ == '__main__':
-    main()
+main()
