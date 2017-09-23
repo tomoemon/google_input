@@ -1,6 +1,7 @@
 # google_input
 
-[![Build Status](https://travis-ci.org/tomoemon/google_input.svg?branch=develop)](https://travis-ci.org/tomoemon/google_input)
+| master | [![Build Status](https://travis-ci.org/tomoemon/google_input.svg?branch=master)](https://travis-ci.org/tomoemon/google_input) |
+| develop | [![Build Status](https://travis-ci.org/tomoemon/google_input.svg?branch=develop)](https://travis-ci.org/tomoemon/google_input) |
 
 これは、Google 日本語入力のローマ字入力のアルゴリズムを実装してみたものです。
 
