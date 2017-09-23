@@ -4,6 +4,10 @@ from google_input.ime import GoogleInputIME, TrieNode
 from google_input.filter_rule import FilterRuleTable, FilterRule
 
 
+def test_false():
+    assert False
+
+
 def test_empty_rule():
     # ルールなしで IME を生成
     ime = GoogleInputIME()
