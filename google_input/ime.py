@@ -115,7 +115,8 @@ class GoogleInputIME:
                 # 現在のノードが出力を持っている場合はそれを結果として返し、
                 # 入力された値を次の入力にセットして返す
                 self.current_node = self.root
-                return InputResult(True, c.output_rule._replace(next_input=key), True)
+                next_input = c.output_rule.next_input + key
+                return InputResult(True, c.output_rule._replace(next_input=next_input), True)
             else:
                 return InputResult(False, None, self.finished)
 

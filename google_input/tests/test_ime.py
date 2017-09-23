@@ -134,11 +134,52 @@ def test_match_shortest_in_common_prefix_rules():
     assert len(result_list) == 2, "「次の入力」への継続があるので結果は2つ"
 
     result_1 = result_list[0]
-    assert result_1.moved == True, "初期状態に戻っているのでどのルールにもマッチしない"
+    assert result_1.moved == True, "a の遷移が完了する"
     assert result_1.output_rule is not None
     rule = result_1.output_rule
     assert (rule.input, rule.output, rule.next_input) == ('a', 'A', 'b')
     assert result_1.finished == True
+
+    result_2 = result_list[1]
+    assert result_2.moved == False, "初期状態に戻っているのでどのルールにもマッチしない"
+    assert result_2.output_rule is None
+    assert result_2.finished == True
+
+
+def test_match_shortest_having_next_input_in_common_prefix_rules():
+    table = FilterRuleTable()
+    table.add(FilterRule("a", "A", "p"))
+    table.add(FilterRule("ax", "AX", ""))
+
+    # ルール1件で IME を生成
+    ime = GoogleInputIME(table)
+
+    # IME に対して 'a' を入力
+    result_list = ime.input("a")
+
+    assert len(result_list) == 1, "「次の入力」への継続がないので結果は1つのみ"
+
+    result = result_list[0]
+    assert result.moved == True, "ルールにマッチするので遷移する"
+    assert result.output_rule is None, "ルールにマッチしたが出力は確定していない"
+    assert result.finished == False, "まだ遷移は完了していない"
+
+    # 続けて、IME に対して 'b' を入力
+    result_list = ime.input("b")
+
+    assert len(result_list) == 3, "もとのルールが持つ「次の入力」＋ルールに存在しない入力と合わせて結果は3つ"
+
+    result_1 = result_list[0]
+    assert result_1.moved == True
+    assert result_1.output_rule is not None
+    rule = result_1.output_rule
+    assert (rule.input, rule.output, rule.next_input) == ('a', 'A', 'pb')
+    assert result_1.finished == True
+
+    result_3 = result_list[1]
+    assert result_3.moved == False, "初期状態に戻っているのでどのルールにもマッチしない"
+    assert result_3.output_rule is None
+    assert result_3.finished == True
 
     result_2 = result_list[1]
     assert result_2.moved == False, "初期状態に戻っているのでどのルールにもマッチしない"
