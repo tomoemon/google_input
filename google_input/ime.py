@@ -6,6 +6,7 @@ from .filter_rule import FilterRule
 class TrieNode(dict):
     def __init__(self):
         self.output_rule = None
+        self.buffer = ""
 
     @classmethod
     def make(cls, start_node, rule, rest_input):
@@ -15,6 +16,9 @@ class TrieNode(dict):
         else:
             next_node = start_node[key] = cls()
         if rest_input:
+            # ここまでの入力を bufferとして保存する
+            next_node.buffer = rule.input[:len(rule.input) - len(rest_input)]
+
             return cls.make(next_node, rule, rest_input)
         next_node.output_rule = rule
         return next_node
@@ -49,13 +53,12 @@ class GoogleInputIME:
         current_node (TrieNode): 変換中の現在のノードを表す
     """
 
-    __slots__ = ["root", "current_node", "last_buffer"]
+    __slots__ = ["root", "current_node"]
 
     def __init__(self, rule_table=()):
         self.set_table(rule_table)
 
     def reset(self):
-        self.last_buffer = ""
         self.current_node = self.root
 
     @property
@@ -66,7 +69,6 @@ class GoogleInputIME:
         new_ime = GoogleInputIME()
         new_ime.root = self.root
         new_ime.current_node = self.current_node
-        new_ime.last_buffer = self.last_buffer
         return new_ime
 
     def set_table(self, rule_table):
@@ -116,28 +118,25 @@ class GoogleInputIME:
         c = self.current_node
         if key not in c:
             # 次にマッチしうるどのルールの入力にも一致しない場合
-            last_buffer = self.last_buffer
             self.current_node = self.root
-            self.last_buffer = ""
             if c.output_rule:
                 # 現在のノードが出力を持っている場合はそれを結果として返し、
                 # 入力された値を次の入力にセットして返す
                 next_input = c.output_rule.next_input + key
                 return InputResult(True, c.output_rule._replace(next_input=next_input), "")
             else:
-                if last_buffer:
+                b = c.buffer
+                if b:
                     # これまでに入力途中だった文字列があればそれを確定して出力する
-                    return InputResult(False, FilterRule(last_buffer, last_buffer, key), "")
+                    return InputResult(False, FilterRule(b, b, key), "")
                 else:
                     return InputResult(False, FilterRule(key, key, ""), "")
 
         if c[key]:
             # この次にさらに現在のルール上で遷移が続く場合
             self.current_node = c[key]
-            self.last_buffer += key
-            return InputResult(True, None, self.last_buffer)
+            return InputResult(True, None, c[key].buffer)
         else:
             # finish
             self.current_node = self.root
-            self.last_buffer = ""
-            return InputResult(True, c[key].output_rule, "")
+            return InputResult(True, c[key].output_rule, c[key].buffer)
