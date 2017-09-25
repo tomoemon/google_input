@@ -44,7 +44,6 @@ def test_simple_rule():
 
 def test_long_input():
     table = FilterRuleTable()
-    pprint([e for e in table])
     table.add(FilterRule("abc", "ABCDE", ""))
     table.add(FilterRule("abd", "XYA12", ""))
 
@@ -229,50 +228,36 @@ def test_possible_input():
 def test_romaji_input():
     table = FilterRuleTable.from_file(data.filepath("google_ime_default_roman_table.txt"))
 
+    def _input(inputs):
+        output = []
+        for c in inputs:
+            results = ime.input(c)
+            output.append("".join(r.output_rule.output for r in results if r.output_rule))
+        return "".join(output)
+
     # 撥音
     ime = GoogleInputIME(table)
-    inputs = "nandexnnenn"
-    output = []
-    for c in inputs:
-        results = ime.input(c)
-        output.append("".join(r.output_rule.output for r in results if r.output_rule))
-    assert "".join(output) == "なんでんねん"
+    assert _input("nandexnnenn") == "なんでんねん"
 
     # 促音
     ime = GoogleInputIME(table)
-    inputs = "attisoltuchi"
-    output = []
-    for c in inputs:
-        results = ime.input(c)
-        output.append("".join(r.output_rule.output for r in results if r.output_rule))
-    assert "".join(output) == "あっちそっち"
+    assert _input("attisoltuchi") == "あっちそっち"
+    assert _input("tttta") == "っっった"
 
     # 清音
     ime = GoogleInputIME(table)
-    inputs = "aiueokakikukekosasisusesotatitutetonaninunenohahihuhehomamimumemoyayuyorarirurerowawonn"
-    output = []
-    for c in inputs:
-        results = ime.input(c)
-        output.append("".join(r.output_rule.output for r in results if r.output_rule))
-    assert "".join(output) == "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん"
+    assert _input("aiueokakikukekosasisusesotatitutetonaninunenohahihuhehomamimumemoyayuyorarirurerowawonn") \
+        == "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん"
 
     # 濁音、半濁音
     ime = GoogleInputIME(table)
-    inputs = "gagigugegozazizuzezodadidudedobabibubebopapipupepo"
-    output = []
-    for c in inputs:
-        results = ime.input(c)
-        output.append("".join(r.output_rule.output for r in results if r.output_rule))
-    assert "".join(output) == "がぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽ"
+    assert _input("gagigugegozazizuzezodadidudedobabibubebopapipupepo") \
+        == "がぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽ"
 
     # 拗音
     ime = GoogleInputIME(table)
-    inputs = "lalilulelokyakyukyoshashushotyatyutyonyanyunyohyahyuhyomyamyumyoryaryuryo"
-    output = []
-    for c in inputs:
-        results = ime.input(c)
-        output.append("".join(r.output_rule.output for r in results if r.output_rule))
-    assert "".join(output) == "ぁぃぅぇぉきゃきゅきょしゃしゅしょちゃちゅちょにゃにゅにょひゃひゅひょみゃみゅみょりゃりゅりょ"
+    assert _input("lalilulelokyakyukyoshashushotyatyutyonyanyunyohyahyuhyomyamyumyoryaryuryo") \
+        == "ぁぃぅぇぉきゃきゅきょしゃしゅしょちゃちゅちょにゃにゅにょひゃひゅひょみゃみゅみょりゃりゅりょ"
 
     #
     ime = GoogleInputIME(table)
@@ -286,22 +271,19 @@ def test_romaji_input():
 def test_azik_input():
     table = FilterRuleTable.from_file(data.filepath("google_ime_tomoemon_azik.txt"))
 
+    def _input(inputs):
+        output = []
+        for c in inputs:
+            results = ime.input(c)
+            output.append("".join(r.output_rule.output for r in results if r.output_rule))
+        return "".join(output)
+
     #
     ime = GoogleInputIME(table)
-    inputs = "a@ko"
-    output = []
-    for c in inputs:
-        results = ime.input(c)
-        output.append("".join(r.output_rule.output for r in results if r.output_rule))
-    assert "".join(output) == "あんこ"
+    assert _input("a@ko") == "あんこ"
     #
     ime = GoogleInputIME(table)
-    inputs = "eqno"
-    output = []
-    for c in inputs:
-        results = ime.input(c)
-        output.append("".join(r.output_rule.output for r in results if r.output_rule))
-    assert "".join(output) == "えんの"
+    assert _input("eqno") == "えんの"
     #
     ime = GoogleInputIME(table)
     inputs = "sa@"
@@ -314,12 +296,7 @@ def test_azik_input():
 
     #
     ime = GoogleInputIME(table)
-    inputs = "aksw"
-    output = []
-    for c in inputs:
-        results = ime.input(c)
-        output.append("".join(r.output_rule.output for r in results if r.output_rule))
-    assert "".join(output) == "あkせい"
+    assert _input("aksw") == "あkせい"
 
 
 def test_long_not_matched():
