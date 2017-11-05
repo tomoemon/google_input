@@ -169,7 +169,7 @@ def test_match_shortest_having_next_input_in_common_prefix_rules():
     # 続けて、IME に対して 'b' を入力
     result_list = ime.input("b")
 
-    assert len(result_list) == 3, "もとのルールが持つ「次の入力」＋ルールに存在しない入力と合わせて結果は3つ"
+    assert len(result_list) == 2, "もとのルールが持つ「次の入力」＋ルールに存在しない入力と合わせて結果は3つ"
 
     result_1 = result_list[0]
     assert result_1.moved == True
@@ -181,14 +181,8 @@ def test_match_shortest_having_next_input_in_common_prefix_rules():
     result_2 = result_list[1]
     assert result_2.moved == False, "初期状態に戻っているのでどのルールにもマッチしない"
     rule = result_2.output_rule
-    assert (rule.input, rule.output, rule.next_input) == ('p', 'p', '')
+    assert (rule.input, rule.output, rule.next_input) == ('pb', 'pb', '')
     assert result_2.finished == True
-
-    result_3 = result_list[2]
-    assert result_3.moved == False, "初期状態に戻っているのでどのルールにもマッチしない"
-    rule = result_3.output_rule
-    assert (rule.input, rule.output, rule.next_input) == ('b', 'b', '')
-    assert result_3.finished == True
 
 
 def test_possible_input():
@@ -320,3 +314,19 @@ def test_long_not_matched():
     assert (rule.input, rule.output, rule.next_input) == ('abc', 'abc', 'X')
     rule = results[1].output_rule
     assert (rule.input, rule.output, rule.next_input) == ('X', 'X', '')
+
+
+def test_long_next_input():
+    table = FilterRuleTable()
+    table.add(FilterRule("a", "A", ""))
+    table.add(FilterRule("x", "", "ka"))
+
+    # 初期状態
+    ime = GoogleInputIME(table)
+    results = ime.input("x")
+    assert len(results) == 2
+    rule = results[0].output_rule
+    assert (rule.input, rule.output, rule.next_input) == ('x', '', 'ka')
+    rule = results[1].output_rule
+    assert (rule.input, rule.output, rule.next_input) == ('ka', 'ka', '')
+    

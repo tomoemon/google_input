@@ -63,7 +63,7 @@ class GoogleInputIME:
 
     @property
     def finished(self):
-        return self.current_node == self.root
+        return self.current_node is self.root
 
     def copy(self):
         new_ime = GoogleInputIME()
@@ -96,16 +96,23 @@ class GoogleInputIME:
             key (str): 入力文字列
         Returns:
             list(InputResult): 入力文字に対応する変換結果を返す。
-                          next_input により別のルールが適用された場合は複数の InputResult を返す
+                               next_input により別のルールが適用された場合は複数の InputResult を返す
         """
-        key, rest_keys = keys[:1], keys[1:]
-        if not key:
+        if not keys:
             return last_results
+        
         if len(last_results) > 10:
+            # 無限ループを防ぐ
             return last_results
-        result = self._input(key)
-        rest_keys = (result.output_rule.next_input if result.output_rule else "") + rest_keys
-        return self.input(rest_keys, last_results + [result])
+        
+        results = [self._input(key) for key in keys]
+        if any([result.finished for result in results[:-1]]):
+            # 複数キーを入力として受けたときはそれが1つのルールに完全一致するか前方一致する場合のみ受け入れる
+            # そのため、最後の結果以外で finished している場合はどのルールにもマッチさせない
+            return last_results + [InputResult(False, FilterRule(keys, keys, ""), "")]
+        next_input = (results[-1].output_rule.next_input if results[-1].output_rule else "")
+        return self.input(next_input, last_results + results)
+
 
     def _input(self, key):
         """ 1文字を入力として受け付け、その変換結果を返す。next_input による自動遷移は考慮しない
