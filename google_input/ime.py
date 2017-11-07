@@ -136,7 +136,7 @@ class GoogleInputIME:
                 # 現在のノードが出力を持っている場合はそれを結果として返し、
                 # 入力された値を次の入力にセットして返す
                 next_input = c.output_rule.next_input + key
-                return InputResult(True, c.output_rule._replace(next_input=next_input), "")
+                return InputResult(False, c.output_rule._replace(next_input=next_input), "")
             else:
                 b = c.buffer
                 if b:
@@ -150,6 +150,6 @@ class GoogleInputIME:
             self.current_node = c[key]
             return InputResult(True, None, c[key].buffer)
         else:
-            # finish
+            # finish ノードの終端なのでバッファなし
             self.current_node = self.root
-            return InputResult(True, c[key].output_rule, c[key].buffer)
+            return InputResult(True, c[key].output_rule, "")

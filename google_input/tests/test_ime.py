@@ -127,6 +127,7 @@ def test_match_shortest_in_common_prefix_rules():
     result = result_list[0]
     assert result.moved == True, "ルールにマッチするので遷移する"
     assert result.output_rule is None, "ルールにマッチしたが出力は確定していない"
+    assert result.buffer == "a"
     assert result.finished == False, "まだ遷移は完了していない"
 
     # 続けて、IME に対して 'b' を入力
@@ -135,7 +136,7 @@ def test_match_shortest_in_common_prefix_rules():
     assert len(result_list) == 2, "「次の入力」への継続があるので結果は2つ"
 
     result_1 = result_list[0]
-    assert result_1.moved == True, "a の遷移が完了する"
+    assert result_1.moved == False, "a の次にマッチするルールはない"
     assert result_1.output_rule is not None
     rule = result_1.output_rule
     assert (rule.input, rule.output, rule.next_input) == ('a', 'A', 'b')
@@ -172,7 +173,7 @@ def test_match_shortest_having_next_input_in_common_prefix_rules():
     assert len(result_list) == 2, "もとのルールが持つ「次の入力」＋ルールに存在しない入力と合わせて結果は3つ"
 
     result_1 = result_list[0]
-    assert result_1.moved == True
+    assert result_1.moved == False
     assert result_1.output_rule is not None
     rule = result_1.output_rule
     assert (rule.input, rule.output, rule.next_input) == ('a', 'A', 'pb')
@@ -330,3 +331,34 @@ def test_long_next_input():
     rule = results[1].output_rule
     assert (rule.input, rule.output, rule.next_input) == ('ka', 'ka', '')
     
+
+def test_next_input_and_output():
+    table = FilterRuleTable()
+    table.add(FilterRule("x", "X", "y"))
+    table.add(FilterRule("y", "Y", "z"))
+    table.add(FilterRule("za", "ZA", ""))
+
+    # 初期状態
+    ime = GoogleInputIME(table)
+
+    results = ime.input("x")
+    assert len(results) == 3
+    assert results[0].moved == True
+    assert results[0].buffer == ""
+    rule = results[0].output_rule
+    assert (rule.input, rule.output, rule.next_input) == ('x', 'X', 'y')
+    assert results[1].moved == True
+    assert results[1].buffer == ""
+    rule = results[1].output_rule
+    assert (rule.input, rule.output, rule.next_input) == ('y', 'Y', 'z')
+    assert results[2].moved == True
+    assert results[2].buffer == "z"
+    rule = results[2].output_rule
+    assert rule is None
+
+    results = ime.input("a")
+    assert len(results) == 1
+    assert results[0].moved == True
+    assert results[0].buffer == ""
+    rule = results[0].output_rule
+    assert (rule.input, rule.output, rule.next_input) == ('za', 'ZA', '')
