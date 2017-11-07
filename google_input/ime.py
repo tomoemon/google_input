@@ -105,11 +105,17 @@ class GoogleInputIME:
             # 無限ループを防ぐ
             return last_results
         
-        results = [self._input(key) for key in keys]
-        if any([result.finished for result in results[:-1]]):
+        results = []
+        for key in keys:
+            results.append(self._input(key))
+            if results[-1].finished:
+                break
+
+        if len(results) != len(keys):
             # 複数キーを入力として受けたときはそれが1つのルールに完全一致するか前方一致する場合のみ受け入れる
             # そのため、最後の結果以外で finished している場合はどのルールにもマッチさせない
             return last_results + [InputResult(False, FilterRule(keys, keys, ""), "")]
+        
         next_input = (results[-1].output_rule.next_input if results[-1].output_rule else "")
         return self.input(next_input, last_results + results)
 
