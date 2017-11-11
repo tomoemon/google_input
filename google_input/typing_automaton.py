@@ -86,23 +86,23 @@ class TypingAutomaton:
             # その場合は失敗として扱う
             """
             "eqno"
-            e [InputResult(moved=True, output_rule=FilterRule(input='e', output='え', next_input=''), buffer='')]
-            q [InputResult(moved=True, output_rule=FilterRule(input='q', output='ん', next_input=''), buffer='')]
-            n [InputResult(moved=True, output_rule=None, buffer='n')]
-            o [InputResult(moved=True, output_rule=FilterRule(input='no', output='の', next_input=''), buffer='')]
+            e [InputResult(moved=True, matched_rule=FilterRule(input='e', output='え', next_input=''), buffer='')]
+            q [InputResult(moved=True, matched_rule=FilterRule(input='q', output='ん', next_input=''), buffer='')]
+            n [InputResult(moved=True, matched_rule=None, buffer='n')]
+            o [InputResult(moved=True, matched_rule=FilterRule(input='no', output='の', next_input=''), buffer='')]
 
             "e@no"
-            e [InputResult(moved=True, output_rule=FilterRule(input='e', output='え', next_input=''), buffer='')]
-            @ [InputResult(moved=True, output_rule=FilterRule(input='@', output='', next_input='ん'), buffer=''), InputResult(moved=True, output_rule=None, buffer='ん')]
-            n [InputResult(moved=False, output_rule=FilterRule(input='ん', output='ん', next_input='n'), buffer=''), InputResult(moved=True, output_rule=None, buffer='n')]
-            o [InputResult(moved=True, output_rule=FilterRule(input='no', output='の', next_input=''), buffer='')
+            e [InputResult(moved=True, matched_rule=FilterRule(input='e', output='え', next_input=''), buffer='')]
+            @ [InputResult(moved=True, matched_rule=FilterRule(input='@', output='', next_input='ん'), buffer=''), InputResult(moved=True, matched_rule=None, buffer='ん')]
+            n [InputResult(moved=False, matched_rule=FilterRule(input='ん', output='ん', next_input='n'), buffer=''), InputResult(moved=True, matched_rule=None, buffer='n')]
+            o [InputResult(moved=True, matched_rule=FilterRule(input='no', output='の', next_input=''), buffer='')
 
-            n [InputResult(moved=True, output_rule=None, buffer='n')]
-            k [InputResult(moved=True, output_rule=FilterRule(input='n', output='ん', next_input='k'), buffer=''),
-                InputResult(moved=True, output_rule=None, buffer='k')]
+            n [InputResult(moved=True, matched_rule=None, buffer='n')]
+            k [InputResult(moved=True, matched_rule=FilterRule(input='n', output='ん', next_input='k'), buffer=''),
+                InputResult(moved=True, matched_rule=None, buffer='k')]
             """
             if results[-1].moved:
-                output = "".join(r.output_rule.output for r in results if r.output_rule)
+                output = "".join(r.output for r in results)
                 if output + results[-1].buffer == rest_kana:
                     # 入力途中の状態であっても最後のかなであれば完了させる
                     next_rest_kana = rest_kana[len(output + results[-1].buffer):]
@@ -120,7 +120,7 @@ class TypingAutomaton:
                             next_rest_kana = rest_kana[len(output):]
                             # print("output:", k, output)
                             next_inputted_kana = inputted_kana + output
-                            if results[-1].finished:
+                            if results[-1].buffer == "":
                                 if next_inputted_kana in states_dict:
                                     next_state = states_dict[next_inputted_kana]
                                 else:

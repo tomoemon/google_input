@@ -17,19 +17,19 @@ def test_simple_rule():
     c = root
     assert sorted(c.keys()) == ["a"]
     assert c.buffer == ""
-    assert c.output_rule is None
+    assert c.rule is None
     c = c["a"]
     assert sorted(c.keys()) == ["b"]
     assert c.buffer == "a"
-    assert c.output_rule is None
+    assert c.rule is None
     c = c["b"]
     assert sorted(c.keys()) == ["c"]
     assert c.buffer == "ab"
-    assert c.output_rule is None
+    assert c.rule is None
     c = c["c"]
     assert sorted(c.keys()) == []
     assert c.buffer == ""
-    assert c.output_rule == rules[0]
+    assert c.rule == rules[0]
 
 
 def test_multi_rule():
@@ -45,20 +45,20 @@ def test_multi_rule():
     c = root
     assert sorted(c.keys()) == ["a"]
     assert c.buffer == ""
-    assert c.output_rule is None
+    assert c.rule is None
     c = c["a"]
     assert sorted(c.keys()) == ["b"]
     assert c.buffer == "a"
-    assert c.output_rule is None
+    assert c.rule is None
     c = c["b"]
     assert sorted(c.keys()) == ["x", "y"]
     assert c.buffer == "ab"
-    assert c.output_rule is None
+    assert c.rule is None
     x = c["x"]
     assert sorted(x.keys()) == []
     assert x.buffer == ""
-    assert x.output_rule == rules[0]
+    assert x.rule == rules[0]
     y = c['y']
     assert sorted(y.keys()) == []
     assert y.buffer == ""
-    assert y.output_rule == rules[1]
+    assert y.rule == rules[1]
