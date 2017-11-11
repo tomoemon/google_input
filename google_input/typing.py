@@ -116,7 +116,7 @@ def to_automaton(match_rules_list):
     """
     root = State()
     leaf = State()
-    state_keys = {0: root, len(match_rules_list): leaf}
+    kana_states = {0: root, len(match_rules_list): leaf}
 
     def _connect_keys(parent, keys, next_kana_state):
         for key in keys[:-1]:
@@ -132,14 +132,14 @@ def to_automaton(match_rules_list):
         rules = match_rules_list[current_kana_index]
         for char_length, keys_list in rules:
             next_kana_index = current_kana_index + char_length
-            next_kana_state = state_keys.setdefault(next_kana_index, State())
+            next_kana_state = kana_states.setdefault(next_kana_index, State())
             for keys in keys_list:
                 _connect_keys(parent, keys, next_kana_state)
             _connect_next_kana(next_kana_state, next_kana_index)
 
     _connect_next_kana(root, 0)
     remove_unreachable(root, leaf)
-    return root
+    return root, kana_states
 
 
 def remove_unreachable(root, leaf):

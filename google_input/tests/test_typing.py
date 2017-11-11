@@ -50,5 +50,5 @@ def test_automaton():
     #pprint(result)
     #rules = match_rules("きょう", expanded_rules)
     #pprint(rules, width=1)
-    #root = to_automaton(rules)
+    #root, kana_states = to_automaton(rules)
     #pprint(root, width=1)
