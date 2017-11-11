@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from pprint import pprint
 from google_input.ime import GoogleInputIME, TrieNode
-from google_input.filter_rule import FilterRuleTable, FilterRule
+from google_input.convert_rule import ConvertRuleTable, ConvertRule
 from google_input import data
 
 
@@ -23,9 +23,9 @@ def test_empty_rule():
 
 
 def test_simple_rule():
-    table = FilterRuleTable()
-    table.add(FilterRule("a", "A", ""))
-    table.add(FilterRule("b", "B", ""))
+    table = ConvertRuleTable()
+    table.add(ConvertRule("a", "A", ""))
+    table.add(ConvertRule("b", "B", ""))
 
     # ルール1件で IME を生成
     ime = GoogleInputIME(table)
@@ -44,9 +44,9 @@ def test_simple_rule():
 
 
 def test_long_input():
-    table = FilterRuleTable()
-    table.add(FilterRule("abc", "ABCDE", ""))
-    table.add(FilterRule("abd", "XYA12", ""))
+    table = ConvertRuleTable()
+    table.add(ConvertRule("abc", "ABCDE", ""))
+    table.add(ConvertRule("abd", "XYA12", ""))
 
     # ルール1件で IME を生成
     ime = GoogleInputIME(table)
@@ -87,9 +87,9 @@ def test_long_input():
 
 
 def test_match_longest_in_common_prefix_rules():
-    table = FilterRuleTable()
-    table.add(FilterRule("a", "A", ""))
-    table.add(FilterRule("ax", "AX", ""))
+    table = ConvertRuleTable()
+    table.add(ConvertRule("a", "A", ""))
+    table.add(ConvertRule("ax", "AX", ""))
 
     # ルール1件で IME を生成
     ime = GoogleInputIME(table)
@@ -121,9 +121,9 @@ def test_match_longest_in_common_prefix_rules():
 
 
 def test_match_shortest_in_common_prefix_rules():
-    table = FilterRuleTable()
-    table.add(FilterRule("a", "A", ""))
-    table.add(FilterRule("ax", "AX", ""))
+    table = ConvertRuleTable()
+    table.add(ConvertRule("a", "A", ""))
+    table.add(ConvertRule("ax", "AX", ""))
 
     # ルール1件で IME を生成
     ime = GoogleInputIME(table)
@@ -162,9 +162,9 @@ def test_match_shortest_in_common_prefix_rules():
 
 
 def test_match_shortest_having_next_input_in_common_prefix_rules():
-    table = FilterRuleTable()
-    table.add(FilterRule("a", "A", "p"))
-    table.add(FilterRule("ax", "AX", ""))
+    table = ConvertRuleTable()
+    table.add(ConvertRule("a", "A", "p"))
+    table.add(ConvertRule("ax", "AX", ""))
 
     # ルール1件で IME を生成
     ime = GoogleInputIME(table)
@@ -203,10 +203,10 @@ def test_match_shortest_having_next_input_in_common_prefix_rules():
 
 
 def test_possible_input():
-    table = FilterRuleTable()
-    table.add(FilterRule("a", "A", ""))
-    table.add(FilterRule("ax", "AX", ""))
-    table.add(FilterRule("b", "B", ""))
+    table = ConvertRuleTable()
+    table.add(ConvertRule("a", "A", ""))
+    table.add(ConvertRule("ax", "AX", ""))
+    table.add(ConvertRule("b", "B", ""))
 
     # 初期状態
     ime = GoogleInputIME(table)
@@ -237,7 +237,7 @@ def test_possible_input():
 
 
 def test_romaji_input():
-    table = FilterRuleTable.from_file(data.filepath("google_ime_default_roman_table.txt"))
+    table = ConvertRuleTable.from_file(data.filepath("google_ime_default_roman_table.txt"))
 
     def _input(inputs):
         output = []
@@ -282,7 +282,7 @@ def test_romaji_input():
 
 
 def test_azik_input():
-    table = FilterRuleTable.from_file(data.filepath("google_ime_tomoemon_azik.txt"))
+    table = ConvertRuleTable.from_file(data.filepath("google_ime_tomoemon_azik.txt"))
 
     def _input(inputs):
         output = []
@@ -313,8 +313,8 @@ def test_azik_input():
 
 
 def test_long_not_matched():
-    table = FilterRuleTable()
-    table.add(FilterRule("abcde", "ABC", ""))
+    table = ConvertRuleTable()
+    table.add(ConvertRule("abcde", "ABC", ""))
 
     # 初期状態
     ime = GoogleInputIME(table)
@@ -350,9 +350,9 @@ def test_long_not_matched():
 
 
 def test_long_next_input():
-    table = FilterRuleTable()
-    table.add(FilterRule("a", "A", ""))
-    table.add(FilterRule("x", "", "ka"))
+    table = ConvertRuleTable()
+    table.add(ConvertRule("a", "A", ""))
+    table.add(ConvertRule("x", "", "ka"))
 
     # 初期状態
     ime = GoogleInputIME(table)
@@ -371,10 +371,10 @@ def test_long_next_input():
     
 
 def test_next_input_and_output():
-    table = FilterRuleTable()
-    table.add(FilterRule("x", "X", "y"))
-    table.add(FilterRule("y", "Y", "z"))
-    table.add(FilterRule("za", "ZA", ""))
+    table = ConvertRuleTable()
+    table.add(ConvertRule("x", "X", "y"))
+    table.add(ConvertRule("y", "Y", "z"))
+    table.add(ConvertRule("za", "ZA", ""))
 
     # 初期状態
     ime = GoogleInputIME(table)

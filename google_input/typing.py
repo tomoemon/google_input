@@ -3,33 +3,33 @@
 
 """
 n: [InputResult(moved=True, matched_rule=None, output='', next_input='', buffer='n')]
-a: [InputResult(moved=True, matched_rule=FilterRule(input='na', output='な', next_input=''), output='な', next_input='', buffer='')]
+a: [InputResult(moved=True, matched_rule=ConvertRule(input='na', output='な', next_input=''), output='な', next_input='', buffer='')]
 
 t: [InputResult(moved=True, matched_rule=None, output='', next_input='', buffer='t')]
-t: [InputResult(moved=True, matched_rule=FilterRule(input='tt', output='っ', next_input='t'), output='っ', next_input='t', buffer=''),
+t: [InputResult(moved=True, matched_rule=ConvertRule(input='tt', output='っ', next_input='t'), output='っ', next_input='t', buffer=''),
     InputResult(moved=True, matched_rule=None, output='', next_input='', buffer='t')]
-u: [InputResult(moved=True, matched_rule=FilterRule(input='tu', output='つ', next_input=''), output='つ', next_input='', buffer='')]
+u: [InputResult(moved=True, matched_rule=ConvertRule(input='tu', output='つ', next_input=''), output='つ', next_input='', buffer='')]
 
 t: [InputResult(moved=True, matched_rule=None, output='', next_input='', buffer='t')]
-t: [InputResult(moved=True, matched_rule=FilterRule(input='tt', output='っ', next_input='t'), output='っ', next_input='t', buffer=''),
+t: [InputResult(moved=True, matched_rule=ConvertRule(input='tt', output='っ', next_input='t'), output='っ', next_input='t', buffer=''),
     InputResult(moved=True, matched_rule=None, output='', next_input='', buffer='t')]
 k: [InputResult(moved=False, matched_rule=None, output='t', next_input='k', buffer=''),
     InputResult(moved=True, matched_rule=None, output='', next_input='', buffer='k')]
 
 デフォルトローマ字入力の定義に従って nk を入力した場合の結果
 n: [InputResult(moved=True, matched_rule=None, output='', next_input='', buffer='n')]
-k: [InputResult(moved=False, matched_rule=FilterRule(input='n', output='ん', next_input=''), output='ん', next_input='k', buffer=''),
+k: [InputResult(moved=False, matched_rule=ConvertRule(input='n', output='ん', next_input=''), output='ん', next_input='k', buffer=''),
     InputResult(moved=True, matched_rule=None, output='', next_input='', buffer='k')]
 
 n: [InputResult(moved=True, matched_rule=None, output='', next_input='', buffer='n')]
-!: [InputResult(moved=False, matched_rule=FilterRule(input='n', output='ん', next_input=''), output='ん', next_input='!', buffer=''),
+!: [InputResult(moved=False, matched_rule=ConvertRule(input='n', output='ん', next_input=''), output='ん', next_input='!', buffer=''),
     InputResult(moved=False, matched_rule=None, output='!', next_input='', buffer='')]
 
 デフォルトローマ字入力の定義に従って zzzr を入力した場合の結果
 z: [InputResult(moved=True, matched_rule=None, output='', next_input='', buffer='z')]
-z: [InputResult(moved=True, matched_rule=FilterRule(input='zz', output='っ', next_input='z'), output='っ', next_input='z', buffer=''),
+z: [InputResult(moved=True, matched_rule=ConvertRule(input='zz', output='っ', next_input='z'), output='っ', next_input='z', buffer=''),
     InputResult(moved=True, matched_rule=None, output='', next_input='', buffer='z')]
-z: [InputResult(moved=True, matched_rule=FilterRule(input='zz', output='っ', next_input='z'), output='っ', next_input='z', buffer=''),
+z: [InputResult(moved=True, matched_rule=ConvertRule(input='zz', output='っ', next_input='z'), output='っ', next_input='z', buffer=''),
     InputResult(moved=True, matched_rule=None, output='', next_input='', buffer='z')]
 r: [InputResult(moved=False, matched_rule=None, output='z', next_input='r', buffer=''),
     InputResult(moved=True, matched_rule=None, output='', next_input='', buffer='r')]
@@ -37,7 +37,7 @@ r: [InputResult(moved=False, matched_rule=None, output='z', next_input='r', buff
 l: [InputResult(moved=True, matched_rule=None, output='', next_input='', buffer='l')]
 t: [InputResult(moved=True, matched_rule=None, output='', next_input='', buffer='lt')]
 ,: [InputResult(moved=False, matched_rule=None, output='lt', next_input=',', buffer=''),
-    InputResult(moved=True, matched_rule=FilterRule(input=',', output='、', next_input=''), output='、', next_input='', buffer='')]
+    InputResult(moved=True, matched_rule=ConvertRule(input=',', output='、', next_input=''), output='、', next_input='', buffer='')]
 """
 
 """

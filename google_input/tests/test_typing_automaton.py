@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from google_input.ime import GoogleInputIME
-from google_input.typing import TypingAutomaton, make_graph
-from google_input.filter_rule import FilterRuleTable, FilterRule
+from google_input.typing_automaton import TypingAutomaton, make_graph
+from google_input.convert_rule import ConvertRuleTable, ConvertRule
 from google_input import data
 
 
@@ -9,7 +9,7 @@ def test_simple_rule():
     inputtable_keys = set(chr(i) for i in range(128) if chr(i).isprintable())
     #filename = "google_ime_tomoemon_azik.txt"
     filename = "google_ime_default_roman_table.txt"
-    table = FilterRuleTable.from_file(data.filepath(filename))
+    table = ConvertRuleTable.from_file(data.filepath(filename))
     ime = GoogleInputIME(table)
 
     automaton = TypingAutomaton(ime, inputtable_keys)

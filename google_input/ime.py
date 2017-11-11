@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from collections import namedtuple
-from .filter_rule import FilterRule
 
 
 class TrieNode(dict):
@@ -45,7 +44,7 @@ class InputResult(namedtuple('InputResult', "moved matched_rule output next_inpu
 class GoogleInputIME:
     """ Google 日本語入力のローマ字入力と同様のアルゴリズムでシーケンシャルにローマ字からかなに変換する
 
-    本家に則って「ローマ字入力」と記載しているが、FilterRule 次第で様々な配列を実現できる
+    本家に則って「ローマ字入力」と記載しているが、ConvertRule 次第で様々な配列を実現できる
 
     Attributes:
         root (TrieNode): 開始ノード

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 from pprint import pprint
 from google_input.ime import GoogleInputIME, TrieNode
-from google_input.filter_rule import FilterRuleTable, FilterRule
+from google_input.convert_rule import ConvertRuleTable, ConvertRule
 from google_input import data
 
 
 def test_simple_rule():
     rules = [
-        FilterRule("abc", "ABC", ""),
+        ConvertRule("abc", "ABC", ""),
     ]
 
     root = TrieNode()
@@ -34,8 +34,8 @@ def test_simple_rule():
 
 def test_multi_rule():
     rules = [
-        FilterRule("abx", "ABX", ""),
-        FilterRule("aby", "ABY", ""),
+        ConvertRule("abx", "ABX", ""),
+        ConvertRule("aby", "ABY", ""),
     ]
 
     root = TrieNode()

@@ -3,7 +3,7 @@ import fileinput
 from collections import namedtuple
 
 
-class FilterRule(namedtuple('FilterRule', "input output next_input")):
+class ConvertRule(namedtuple('ConvertRule', "input output next_input")):
     """ Google 日本語入力のローマ字カスタマイズテーブルの1行に対応
 
     仕様は Google 日本語入力のローマ字テーブル設定と同様で、
@@ -59,10 +59,10 @@ class FilterRule(namedtuple('FilterRule', "input output next_input")):
     """
 
 
-class FilterRuleTable:
+class ConvertRuleTable:
     """ Google 日本語入力のローマ字テーブル設定を表す
 
-    1行1行を FilterRule として読み込み保持する """
+    1行1行を ConvertRule として読み込み保持する """
 
     def __init__(self, rules=None):
         self.rules = rules if rules else []
@@ -79,7 +79,7 @@ class FilterRuleTable:
         inputs = {rule.input: 1 for rule in self}
         for c in characters:
             if overwrite or (c not in inputs):
-                self.rules.append(FilterRule(c, c, ""))
+                self.rules.append(ConvertRule(c, c, ""))
 
     def add_half_character_rules(self, overwrite=False):
         """ 半角英数記号の入力をそのまま出力とするルールを追加する
@@ -100,10 +100,10 @@ class FilterRuleTable:
                     continue
                 items = line.split("\t")
                 if len(items) == 2:
-                    rules.append(FilterRule(items[0], items[1], ""))
+                    rules.append(ConvertRule(items[0], items[1], ""))
                 elif len(items) == 3:
-                    rules.append(FilterRule(items[0], items[1], items[2]))
+                    rules.append(ConvertRule(items[0], items[1], items[2]))
                 else:
                     raise Exception(
                         f'''Definition file has a line which has less than 2 or more than 3 values. [Line {i+1}] "{line}"''')
-        return FilterRuleTable(rules)
+        return ConvertRuleTable(rules)
