@@ -16,9 +16,10 @@ def test_empty_rule():
 
     result = result_list[0]
     assert result.moved == False, "ルールにマッチしないので遷移しない"
-    rule = result.output_rule
-    assert (rule.input, rule.output, rule.next_input) == ('x', 'x', '')
-    assert result.finished == True, "どのルールにもマッチせず初期状態に戻る"
+    assert result.matched_rule is None
+    assert result.output == "x"
+    assert result.next_input == ""
+    assert result.buffer == ""
 
 
 def test_simple_rule():
@@ -36,10 +37,10 @@ def test_simple_rule():
 
     result = result_list[0]
     assert result.moved == True, "ルールにマッチするので遷移する"
-    assert result.output_rule is not None, "ルールにマッチしてすべての入力を完了したので出力あり"
-    rule = result.output_rule
+    assert result.matched_rule is not None, "ルールにマッチしてすべての入力を完了したので出力あり"
+    rule = result.matched_rule
     assert (rule.input, rule.output, rule.next_input) == ('a', 'A', '')
-    assert result.finished == True, "すべての入力を完了したので初期状態に戻る"
+    assert result.buffer == "", "すべての入力を完了したので初期状態に戻る"
 
 
 def test_long_input():
@@ -56,8 +57,10 @@ def test_long_input():
     assert len(result_list_1) == 1, "「次の入力」への継続がないので結果は1つのみ"
     result = result_list_1[0]
     assert result.moved == True, "ルールにマッチして遷移する"
-    assert result.output_rule is None, "ルールの遷移が終わってないので出力はなし"
-    assert result.finished == False, "ルールの遷移が終わってないので出力はなし"
+    assert result.matched_rule is None, "ルールの遷移が終わってないので出力はなし"
+    assert result.output == ""
+    assert result.next_input == ""
+    assert result.buffer == "a", "ルールの遷移が終わってないので出力はなし"
 
     # 続けて、IME に対して 'b' を入力
     result_list_2 = ime.input("b")
@@ -65,8 +68,10 @@ def test_long_input():
     assert len(result_list_2) == 1, "「次の入力」への継続がないので結果は1つのみ"
     result = result_list_2[0]
     assert result.moved == True, "ルールにマッチして遷移する"
-    assert result.output_rule is None, "ルールの遷移が終わってないので出力はなし"
-    assert result.finished == False, "ルールの遷移が終わってないので出力はなし"
+    assert result.matched_rule is None, "ルールの遷移が終わってないので出力はなし"
+    assert result.output == ""
+    assert result.next_input == ""
+    assert result.buffer == "ab", "ルールの遷移が終わってないので出力はなし"
 
     # 続けて、IME に対して 'c' を入力
     result_list_3 = ime.input("c")
@@ -74,10 +79,11 @@ def test_long_input():
     assert len(result_list_3) == 1, "「次の入力」への継続がないので結果は1つのみ"
     result = result_list_3[0]
     assert result.moved == True, "ルールにマッチして遷移する"
-    assert result.output_rule is not None, "ルールにマッチしてすべての入力を完了したので出力あり"
-    assert result.finished == True, "すべての入力を完了したので初期状態に戻る"
-    rule = result.output_rule
+    rule = result.matched_rule
     assert (rule.input, rule.output, rule.next_input) == ('abc', 'ABCDE', '')
+    assert result.output == "ABCDE"
+    assert result.next_input == ""
+    assert result.buffer == "", "すべての入力を完了したので初期状態に戻る"
 
 
 def test_match_longest_in_common_prefix_rules():
@@ -95,8 +101,10 @@ def test_match_longest_in_common_prefix_rules():
 
     result = result_list[0]
     assert result.moved == True, "ルールにマッチするので遷移する"
-    assert result.output_rule is None, "ルールにマッチしたが出力は確定していない"
-    assert result.finished == False, "まだ遷移は完了していない"
+    assert result.matched_rule is None, "ルールにマッチしたが出力は確定していない"
+    assert result.buffer == "a", "まだ遷移は完了していない"
+    assert result.output == ""
+    assert result.next_input == ""
 
     # 続けて、IME に対して 'x' を入力
     result_list = ime.input("x")
@@ -105,10 +113,11 @@ def test_match_longest_in_common_prefix_rules():
 
     result = result_list[0]
     assert result.moved == True, "初期状態に戻っているのでどのルールにもマッチしない"
-    assert result.output_rule is not None
-    rule = result.output_rule
+    rule = result.matched_rule
     assert (rule.input, rule.output, rule.next_input) == ('ax', 'AX', '')
-    assert result.finished == True
+    assert result.buffer == ""
+    assert result.output == "AX"
+    assert result.next_input == ""
 
 
 def test_match_shortest_in_common_prefix_rules():
@@ -126,9 +135,10 @@ def test_match_shortest_in_common_prefix_rules():
 
     result = result_list[0]
     assert result.moved == True, "ルールにマッチするので遷移する"
-    assert result.output_rule is None, "ルールにマッチしたが出力は確定していない"
+    assert result.matched_rule is None, "ルールにマッチしたが出力は確定していない"
     assert result.buffer == "a"
-    assert result.finished == False, "まだ遷移は完了していない"
+    assert result.output == ""
+    assert result.next_input == ""
 
     # 続けて、IME に対して 'b' を入力
     result_list = ime.input("b")
@@ -137,16 +147,18 @@ def test_match_shortest_in_common_prefix_rules():
 
     result_1 = result_list[0]
     assert result_1.moved == False, "a の次にマッチするルールはない"
-    assert result_1.output_rule is not None
-    rule = result_1.output_rule
-    assert (rule.input, rule.output, rule.next_input) == ('a', 'A', 'b')
-    assert result_1.finished == True
+    rule = result_1.matched_rule
+    assert (rule.input, rule.output, rule.next_input) == ('a', 'A', '')
+    assert result_1.buffer == ""
+    assert result_1.output == "A"
+    assert result_1.next_input == "b"
 
     result_2 = result_list[1]
     assert result_2.moved == False, "初期状態に戻っているのでどのルールにもマッチしない"
-    rule = result_2.output_rule
-    assert (rule.input, rule.output, rule.next_input) == ('b', 'b', '')
-    assert result_2.finished == True
+    assert result_2.matched_rule is None
+    assert result_2.buffer == ""
+    assert result_2.output == "b"
+    assert result_2.next_input == ""
 
 
 def test_match_shortest_having_next_input_in_common_prefix_rules():
@@ -164,8 +176,10 @@ def test_match_shortest_having_next_input_in_common_prefix_rules():
 
     result = result_list[0]
     assert result.moved == True, "ルールにマッチするので遷移する"
-    assert result.output_rule is None, "ルールにマッチしたが出力は確定していない"
-    assert result.finished == False, "まだ遷移は完了していない"
+    assert result.matched_rule is None, "ルールにマッチしたが出力は確定していない"
+    assert result.buffer == "a", "まだ遷移は完了していない"
+    assert result.output == ""
+    assert result.next_input == ""
 
     # 続けて、IME に対して 'b' を入力
     result_list = ime.input("b")
@@ -174,16 +188,18 @@ def test_match_shortest_having_next_input_in_common_prefix_rules():
 
     result_1 = result_list[0]
     assert result_1.moved == False
-    assert result_1.output_rule is not None
-    rule = result_1.output_rule
-    assert (rule.input, rule.output, rule.next_input) == ('a', 'A', 'pb')
-    assert result_1.finished == True
+    rule = result_1.matched_rule
+    assert (rule.input, rule.output, rule.next_input) == ('a', 'A', 'p')
+    assert result_1.buffer == ""
+    assert result_1.output == "A"
+    assert result_1.next_input == "pb"
 
     result_2 = result_list[1]
     assert result_2.moved == False, "初期状態に戻っているのでどのルールにもマッチしない"
-    rule = result_2.output_rule
-    assert (rule.input, rule.output, rule.next_input) == ('pb', 'pb', '')
-    assert result_2.finished == True
+    assert result_2.matched_rule is None
+    assert result_2.buffer == ""
+    assert result_2.output == "pb"
+    assert result_2.next_input == ""
 
 
 def test_possible_input():
@@ -227,7 +243,7 @@ def test_romaji_input():
         output = []
         for c in inputs:
             results = ime.input(c)
-            output.append("".join(r.output_rule.output for r in results if r.output_rule))
+            output.append("".join(r.output for r in results))
         return "".join(output)
 
     # 撥音
@@ -256,11 +272,13 @@ def test_romaji_input():
 
     #
     ime = GoogleInputIME(table)
-    inputs = "nk"
+    inputs = "wwwre"
     output = []
     for c in inputs:
         results = ime.input(c)
-        output.append("".join(r.output_rule.output for r in results if r.output_rule))
+        output.append(results)
+    from pprint import pprint
+    pprint(output)
 
 
 def test_azik_input():
@@ -270,7 +288,7 @@ def test_azik_input():
         output = []
         for c in inputs:
             results = ime.input(c)
-            output.append("".join(r.output_rule.output for r in results if r.output_rule))
+            output.append("".join(r.output for r in results))
         return "".join(output)
 
     #
@@ -285,7 +303,7 @@ def test_azik_input():
     output = []
     for c in inputs:
         results = ime.input(c)
-        output.append("".join(r.output_rule.output for r in results if r.output_rule))
+        output.append("".join(r.matched_rule.output for r in results if r.matched_rule))
     assert "".join(output) == "さ"
     assert results[-1].buffer == "ん"
 
@@ -302,19 +320,33 @@ def test_long_not_matched():
     ime = GoogleInputIME(table)
     results = ime.input("a")
     assert len(results) == 1
-    assert results[0].output_rule is None
+    assert results[0].matched_rule is None
+    assert results[0].buffer == "a"
+    assert results[0].output == ""
+
     results = ime.input("b")
     assert len(results) == 1
-    assert results[0].output_rule is None
+    assert results[0].matched_rule is None
+    assert results[0].buffer == "ab"
+    assert results[0].output == ""
+
     results = ime.input("c")
     assert len(results) == 1
-    assert results[0].output_rule is None
+    assert results[0].matched_rule is None
+    assert results[0].buffer == "abc"
+    assert results[0].output == ""
+
     results = ime.input("X")
     assert len(results) == 2
-    rule = results[0].output_rule
-    assert (rule.input, rule.output, rule.next_input) == ('abc', 'abc', 'X')
-    rule = results[1].output_rule
-    assert (rule.input, rule.output, rule.next_input) == ('X', 'X', '')
+    assert results[0].matched_rule is None
+    assert results[0].buffer == ""
+    assert results[0].output == "abc"
+    assert results[0].next_input == "X"
+
+    assert results[1].matched_rule is None
+    assert results[1].buffer == ""
+    assert results[1].output == "X"
+    assert results[1].next_input == ""
 
 
 def test_long_next_input():
@@ -326,10 +358,16 @@ def test_long_next_input():
     ime = GoogleInputIME(table)
     results = ime.input("x")
     assert len(results) == 2
-    rule = results[0].output_rule
-    assert (rule.input, rule.output, rule.next_input) == ('x', '', 'ka')
-    rule = results[1].output_rule
-    assert (rule.input, rule.output, rule.next_input) == ('ka', 'ka', '')
+    rule = results[0].matched_rule
+    assert (rule.input, rule.output, rule.next_input) == ("x", "", "ka")
+    assert results[0].output == ""
+    assert results[0].buffer  == ""
+    assert results[0].next_input  == "ka"
+
+    assert results[1].matched_rule is None
+    assert results[1].output == "ka"
+    assert results[1].buffer  == ""
+    assert results[1].next_input  == ""
     
 
 def test_next_input_and_output():
@@ -345,20 +383,20 @@ def test_next_input_and_output():
     assert len(results) == 3
     assert results[0].moved == True
     assert results[0].buffer == ""
-    rule = results[0].output_rule
+    rule = results[0].matched_rule
     assert (rule.input, rule.output, rule.next_input) == ('x', 'X', 'y')
     assert results[1].moved == True
     assert results[1].buffer == ""
-    rule = results[1].output_rule
+    rule = results[1].matched_rule
     assert (rule.input, rule.output, rule.next_input) == ('y', 'Y', 'z')
     assert results[2].moved == True
     assert results[2].buffer == "z"
-    rule = results[2].output_rule
+    rule = results[2].matched_rule
     assert rule is None
 
     results = ime.input("a")
     assert len(results) == 1
     assert results[0].moved == True
     assert results[0].buffer == ""
-    rule = results[0].output_rule
+    rule = results[0].matched_rule
     assert (rule.input, rule.output, rule.next_input) == ('za', 'ZA', '')
