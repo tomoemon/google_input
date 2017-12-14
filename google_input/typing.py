@@ -38,6 +38,12 @@ l: [InputResult(moved=True, matched_rule=None, output='', next_input='', buffer=
 t: [InputResult(moved=True, matched_rule=None, output='', next_input='', buffer='lt')]
 ,: [InputResult(moved=False, matched_rule=None, output='lt', next_input=',', buffer=''),
     InputResult(moved=True, matched_rule=ConvertRule(input=',', output='、', next_input=''), output='、', next_input='', buffer='')]
+
+AZIKで @@ を入力した場合の結果
+@: [InputResult(moved=True, matched_rule=ConvertRule(input='@', output='', next_input='ん'), output='', next_input='ん', buffe
+r=''),
+  InputResult(moved=True, matched_rule=None, output='', next_input='', buffer='ん')]
+@ [InputResult(moved=True, matched_rule=ConvertRule(input='ん@', output='＠', next_input=''), output='＠', next_input='', buffer='')]
 """
 
 """
@@ -46,11 +52,11 @@ output_rule ありが一つでも results に含まれている場合は、そ�
 """
 
 
-def expand(ime, inputtable_keys):
+def expand(ime, inputtable_keys, max_len=10):
     expand_result = {key:[key] for key in inputtable_keys}
 
     def _expand(ime, inputs, last_results):
-        if len(inputs) > 10:
+        if len(inputs) > max_len:
             return
 
         for key in inputtable_keys:
@@ -59,38 +65,34 @@ def expand(ime, inputtable_keys):
             total_results = last_results + input_results
             this_output = "".join(result.output for result in input_results)
 
-            if not this_output:
-                # 出力がなければ入力を続ける
-                _expand(new_ime, inputs + [key], total_results)
-            else:
-                if not input_results[0].moved and not input_results[0].matched_rule:
-                    # 今回の入力でリセットされ、マッチしたルールもない場合、無視する
-                    continue
+            if not input_results[0].moved and not input_results[0].matched_rule:
+                # 今回の入力でリセットされ、マッチしたルールもない場合、無視する
+                continue
 
-                if this_output == key:
-                    # 入力と出力が同じ場合は単独で入力可能なので無視
-                    continue
-                
-                this_rules = [result.matched_rule for result in input_results if result.matched_rule]
-                last_rules = [result.matched_rule for result in last_results if result.matched_rule]
+            if this_output == key:
+                # 入力と出力が同じ場合は単独で入力可能なので無視
+                continue
+            
+            this_rules = [result.matched_rule for result in input_results if result.matched_rule]
+            last_rules = [result.matched_rule for result in last_results if result.matched_rule]
 
-                if [rule for rule in this_rules if rule in last_rules]:
-                    # 以前に同じルールが出力されていればループしてるので無視
-                    continue
+            if [rule for rule in this_rules if rule in last_rules]:
+                # 以前に同じルールが出力されていればループしてるので無視
+                continue
 
-                last_buffer = input_results[-1].buffer
-                last_output = "".join(result.output for result in last_results)
-                total_output = last_output + this_output + last_buffer
-                total_input = "".join(inputs + [key])
+            last_buffer = input_results[-1].buffer
+            last_output = "".join(result.output for result in last_results)
+            total_output = last_output + this_output + last_buffer
+            total_input = "".join(inputs + [key])
 
-                # 入力と出力を展開結果として登録
-                expand_result.setdefault(total_output, []).append(total_input)
+            # 入力と出力を展開結果として登録
+            expand_result.setdefault(total_output, []).append(total_input)
 
-                if not last_buffer:
-                    # バッファがなくなれば、ルールの終端に到達したか、ルールから外れて初期状態に戻ったので終了
-                    continue
+            if not last_buffer:
+                # バッファがなくなれば、ルールの終端に到達したか、ルールから外れて初期状態に戻ったので終了
+                continue
 
-                _expand(new_ime, inputs + [key], total_results)
+            _expand(new_ime, inputs + [key], total_results)
     
     _expand(ime, [], [])
     return expand_result
@@ -142,6 +144,14 @@ def to_automaton(match_rules_list):
     return root, kana_states
 
 
+def to_string(root):
+    """
+    Args:
+        root (State):
+    """
+
+
+
 def remove_unreachable(root, leaf):
     """
     次のように「う」だけを入力するルールがない場合、kyo で2文字文進んだとしても、最後の1文字を入力する遷移がないため、無効にする必要がある
@@ -152,30 +162,26 @@ def remove_unreachable(root, leaf):
       []
     ]
     """
-    to_finishes_dict = {id(leaf): set()}  # {id(node): set(key1, key2, ...)}
+    to_finishes_dict = {}
 
     def backtrack(current):
-        """ 終点（すべてを入力し終わった状態）から遡っていって終端に向かう遷移を始点から辿れるようにする """
-        for key_to_leaf, parent in current.parents:
-            to_child_keys = []
-            for key_from_parent, child in parent.items():
-                if child is current:
-                    to_child_keys.append(key_from_parent)
-            for key in to_child_keys:
-                to_finishes_dict.setdefault(id(parent), set()).add(key)
+        """ 終点（すべてを入力し終わった状態）から遡っていって終端に向かう遷移を始点から辿れるようにマークを付ける """
+        if id(current) in to_finishes_dict:
+            return
+
+        to_finishes_dict[id(current)] = True
+
+        for key_to_current, parent in current.parents:
             backtrack(parent)
 
-    backtrack(leaf)
-
     def remove(current):
-        to_finish_keys = to_finishes_dict[id(current)]
-        current_keys = list(current.keys())
-        for key in current_keys:
-            if key not in to_finish_keys:
+        for key in list(current.keys()):
+            if id(current[key]) not in to_finishes_dict:
                 del current[key]
             else:
                 remove(current[key])
 
+    backtrack(leaf)
     remove(root)
 
 

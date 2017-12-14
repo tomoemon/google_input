@@ -14,9 +14,9 @@ def test_expand():
     table = ConvertRuleTable.from_file(data.filepath(filename))
     ime = GoogleInputIME(table)
 
-    #from pprint import pprint
-    #expanded_rules = expand(ime, inputtable_keys)
-    #pprint(expanded_rules, width=1)
+    from pprint import pprint
+    expanded_rules = expand(ime, inputtable_keys, max_len=15)
+    pprint(expanded_rules, width=1)
 
 
 def test_match_rules():

@@ -236,6 +236,16 @@ def test_possible_input():
     assert sorted(list(ime.possible_input)) == ["a", "b"]
 
 
+def print_convert_result(ime, word):
+    ime = ime.copy()
+    output = []
+    for c in word:
+        results = ime.input(c)
+        output.append(results)
+    from pprint import pprint
+    pprint(output)
+
+
 def test_romaji_input():
     table = ConvertRuleTable.from_file(data.filepath("google_ime_default_roman_table.txt"))
 
@@ -270,15 +280,8 @@ def test_romaji_input():
     assert _input("lalilulelokyakyukyoshashushotyatyutyonyanyunyohyahyuhyomyamyumyoryaryuryo") \
         == "ぁぃぅぇぉきゃきゅきょしゃしゅしょちゃちゅちょにゃにゅにょひゃひゅひょみゃみゅみょりゃりゅりょ"
 
-    #
-    ime = GoogleInputIME(table)
-    inputs = "wwwre"
-    output = []
-    for c in inputs:
-        results = ime.input(c)
-        output.append(results)
-    from pprint import pprint
-    pprint(output)
+    #ime = GoogleInputIME(table)
+    #print_convert_result(ime, "@@")
 
 
 def test_azik_input():
@@ -310,6 +313,10 @@ def test_azik_input():
     #
     ime = GoogleInputIME(table)
     assert _input("aksw") == "あkせい"
+
+    #ime = GoogleInputIME(table)
+    #print_convert_result(ime, "@@")
+
 
 
 def test_long_not_matched():

@@ -62,3 +62,31 @@ def test_multi_rule():
     assert sorted(y.keys()) == []
     assert y.buffer == ""
     assert y.rule == rules[1]
+
+
+def test_common_prefix_rule():
+    rules = [
+        ConvertRule("abc", "ABC", ""),
+        ConvertRule("ab", "AB", ""),
+    ]
+
+    root = TrieNode()
+    for rule in rules:
+        TrieNode.make(root, rule, rule.input)
+
+    c = root
+    assert sorted(c.keys()) == ["a"]
+    assert c.buffer == ""
+    assert c.rule is None
+    c = c["a"]
+    assert sorted(c.keys()) == ["b"]
+    assert c.buffer == "a"
+    assert c.rule is None
+    c = c["b"]
+    assert sorted(c.keys()) == ["c"]
+    assert c.buffer == "ab"
+    assert c.rule is rules[1]
+    c = c["c"]
+    assert sorted(c.keys()) == []
+    assert c.buffer == ""
+    assert c.rule == rules[0]
