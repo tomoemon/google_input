@@ -1,2 +1,0 @@
-# conda で root ディレクトリ名と同一の環境を作成しておく必要がある
-source activate $(basename $(pwd))

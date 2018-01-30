@@ -19,7 +19,7 @@ def test_simple_rule():
     #target_string = "えんの"
     #target_string = "さん"
     #target_string = "えんn"
-    #target_string = "こんk"  # 4.3 sec かかる
+    # target_string = "こんk"  # 4.3 sec かかる
     #target_string = "めっさん"
     #target_string = "かった"
     import time

@@ -140,7 +140,8 @@ class TypingAutomaton:
 
     @classmethod
     def remove_unused_nodes(cls, root, leaf):
-        to_finishes_dict = {id(leaf): set()}  # {id(node): set(key1, key2, ...)}
+        # {id(node): set(key1, key2, ...)}
+        to_finishes_dict = {id(leaf): set()}
 
         def backtrack(current):
             """ 終点（すべてを入力し終わった状態）から遡っていって終端に向かう遷移を始点から辿れるようにする """

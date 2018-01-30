@@ -103,11 +103,11 @@ class GoogleInputIME:
         """
         if not keys:
             return last_results
-        
+
         if len(last_results) > 10:
             # 無限ループを防ぐ
             return last_results
-        
+
         results = []
         for key in keys:
             results.append(self._input(key))
@@ -118,9 +118,8 @@ class GoogleInputIME:
             # 複数キーを入力として受けたときはそれが1つのルールに完全一致するか前方一致する場合のみ受け入れる
             # そのため、最後の結果以外で finished している場合はどのルールにもマッチさせない
             return last_results + [InputResult(False, None, keys, "", "")]
-        
-        return self.input(results[-1].next_input, last_results + results)
 
+        return self.input(results[-1].next_input, last_results + results)
 
     def _input(self, key):
         """ 1文字を入力として受け付け、その変換結果を返す。next_input による自動遷移は考慮しない

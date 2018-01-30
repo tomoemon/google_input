@@ -53,7 +53,7 @@ output_rule ありが一つでも results に含まれている場合は、そ�
 
 
 def expand(ime, inputtable_keys, max_len=10):
-    expand_result = {key:[key] for key in inputtable_keys}
+    expand_result = {key: [key] for key in inputtable_keys}
 
     def _expand(ime, inputs, last_results):
         if len(inputs) > max_len:
@@ -72,7 +72,7 @@ def expand(ime, inputtable_keys, max_len=10):
             if this_output == key:
                 # 入力と出力が同じ場合は単独で入力可能なので無視
                 continue
-            
+
             this_rules = [result.matched_rule for result in input_results if result.matched_rule]
             last_rules = [result.matched_rule for result in last_results if result.matched_rule]
 
@@ -93,7 +93,7 @@ def expand(ime, inputtable_keys, max_len=10):
                 continue
 
             _expand(new_ime, inputs + [key], total_results)
-    
+
     _expand(ime, [], [])
     return expand_result
 
@@ -126,7 +126,7 @@ def to_automaton(match_rules_list):
             parent.connect(key, next_state)
             parent = next_state
         parent.connect(keys[-1], next_kana_state)
-    
+
     def _connect_next_kana(parent, current_kana_index):
         if parent is leaf:
             return
@@ -149,7 +149,6 @@ def to_string(root):
     Args:
         root (State):
     """
-
 
 
 def remove_unreachable(root, leaf):

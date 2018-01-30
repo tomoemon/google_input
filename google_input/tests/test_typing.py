@@ -29,9 +29,10 @@ def test_match_rules():
 
     #from pprint import pprint
     #expanded_rules = expand(ime, inputtable_keys)
-    #pprint(result)
+    # pprint(result)
     #rules = match_rules("きょう", expanded_rules)
     #pprint(rules, width=1)
+
 
 def test_automaton():
     inputtable_keys = set(chr(i) for i in range(128) if chr(i).isprintable())
@@ -47,7 +48,7 @@ def test_automaton():
 
     #from pprint import pprint
     #expanded_rules = expand(ime, inputtable_keys)
-    #pprint(result)
+    # pprint(result)
     #rules = match_rules("きょう", expanded_rules)
     #pprint(rules, width=1)
     #root, kana_states = to_automaton(rules)
