@@ -31,6 +31,8 @@ class InitVsCode(Command):
         import json
 
         curdir = path.abspath(path.dirname(__file__))
+        os.chdir(curdir)
+
         settings_dir = path.join(curdir, ".vscode")
         settings_path = path.join(settings_dir, "settings.json")
 
