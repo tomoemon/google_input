@@ -13,8 +13,9 @@ name = "pypi"
 
 "autopep8" = "*"
 pytest = "*"
-pylint = "*"
 graphviz = "*"
+mypy = "*"
+"flake8" = "*"
 
 
 [requires]
