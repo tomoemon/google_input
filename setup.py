@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
-from os import path
+from pathlib import Path
 import sys
 from setuptools import setup
 from setuptools import Command
@@ -14,7 +14,7 @@ class InitVsCode(Command):
 
     $PYTHON_EXECUTABLE は pipenv が作成した python executable のパス
     """
-    user_options = []
+    user_options: list = []
 
     def initialize_options(self):
         pass
@@ -25,24 +25,24 @@ class InitVsCode(Command):
     def _python_path(self):
         import subprocess
         venv_dir = subprocess.check_output("pipenv --venv").decode(sys.getdefaultencoding()).strip()
-        return path.join(venv_dir, "Scripts", "python").replace('\\', '/')
+        return Path(venv_dir, "Scripts", "python")
 
     def run(self):
         import json
 
-        curdir = path.abspath(path.dirname(__file__))
+        curdir = Path(__file__).resolve().parent
         os.chdir(curdir)
 
-        settings_dir = path.join(curdir, ".vscode")
-        settings_path = path.join(settings_dir, "settings.json")
+        settings_dir = curdir / ".vscode"
+        settings_path = settings_dir / "settings.json"
 
-        os.makedirs(settings_dir, exist_ok=True)
+        settings_dir.mkdir(parents=True, exist_ok=True)
         values = {}
-        if path.isfile(settings_path):
+        if settings_path.is_file():
             with open(settings_path) as fp:
                 values = json.load(fp)
 
-        values["python.pythonPath"] = self._python_path()
+        values["python.pythonPath"] = self._python_path().as_posix()
         with open(settings_path, "w", encoding="utf-8", newline="\n") as fp:
             json.dump(values, fp, indent=4)
 
@@ -54,4 +54,6 @@ setup(
     packages={'google_input': 'google_input'},
     package_data={'google_input': ['data/*.txt']},
     cmdclass={"vscode": InitVsCode}
+
+
 )
